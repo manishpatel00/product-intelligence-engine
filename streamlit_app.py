@@ -24,7 +24,7 @@ st.set_page_config(
     page_title="Unilog Product Intelligence Engine",
     page_icon="⚙️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ---------------------------------------------------------------------------
