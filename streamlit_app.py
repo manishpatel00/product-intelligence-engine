@@ -6,6 +6,7 @@ xAI-inspired design system: near-black canvas, Inter weight 400,
 Geist Mono uppercase eyebrows, pill outlines, hairline borders.
 """
 import csv
+import html
 import json
 import os
 import sys
@@ -696,6 +697,44 @@ div[data-testid="stAlert"] {
     margin-bottom: 0;
 }
 
+.xsource-grid {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-sm);
+    overflow: hidden;
+    margin-bottom: var(--sp-lg);
+}
+
+.xsource-label,
+.xsource-value {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.xsource-label {
+    background: rgba(255,255,255,0.025);
+    color: var(--body-mid);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.xsource-value {
+    min-width: 0;
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 20px;
+    overflow-wrap: anywhere;
+}
+
+.xsource-label:nth-last-child(2),
+.xsource-value:last-child {
+    border-bottom: 0;
+}
+
 /* Pipeline step */
 .xstep {
     display: flex;
@@ -882,6 +921,19 @@ div[data-testid="stAlert"] {
     .xmetric-value {
         font-size: 24px;
     }
+
+    .xsource-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .xsource-label {
+        padding-bottom: 4px;
+        border-bottom: 0;
+    }
+
+    .xsource-value {
+        padding-top: 0;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -898,13 +950,13 @@ def load_presets():
     samp = os.path.join(root, "data", "input_sample_1000.csv")
     try:
         with open(gt, newline="", encoding="utf-8") as f:
-            for r in list(csv.DictReader(f))[:2]:
+            for r in csv.DictReader(f):
                 presets.append(r)
     except Exception:
         pass
     try:
         with open(samp, newline="", encoding="utf-8") as f:
-            for r in list(csv.DictReader(f))[:6]:
+            for r in csv.DictReader(f):
                 presets.append(r)
     except Exception:
         pass
@@ -935,6 +987,22 @@ def render_desc(label, value, meta=None):
         {meta_html}
     </div>
     """
+
+
+def render_source_row(row):
+    fields = (
+        ("MPN", row.get("Mfg_Part_Num", "")),
+        ("Description", row.get("Part_Desc", "")),
+        ("E1 brand", row.get("E1_Brand", "")),
+        ("Unilog brand", row.get("Unilog_Brand", "")),
+        ("DIB brand", row.get("DIB_Brand", "")),
+        ("Manufacturer", row.get("Part_Manuf", "")),
+    )
+    return "".join(
+        f'<div class="xsource-label">{html.escape(label)}</div>'
+        f'<div class="xsource-value">{html.escape(value) or "—"}</div>'
+        for label, value in fields
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -989,16 +1057,27 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    preset_options = ["— choose —"] + [
-        f"{(p.get('Mfg_Part_Num') or 'row')[:18]} — {(p.get('Part_Desc') or '')[:34]}"
-        for p in PRESETS
+    search_query = st.text_input("Search source catalog", placeholder="MPN or description")
+    normalized_query = search_query.strip().casefold()
+    if normalized_query:
+        visible_indices = [
+            i for i, row in enumerate(PRESETS)
+            if normalized_query in " ".join(row.values()).casefold()
+        ]
+    else:
+        visible_indices = list(range(min(12, len(PRESETS))))
+
+    preset_options = ["— choose a row —"] + [
+        f"{(PRESETS[i].get('Mfg_Part_Num') or 'row')[:22]} — "
+        f"{(PRESETS[i].get('Part_Desc') or '')[:38]}"
+        for i in visible_indices
     ]
-    preset_idx = st.selectbox("Sample row", options=range(len(preset_options)),
+    preset_idx = st.selectbox("Source row", options=range(len(preset_options)),
                               format_func=lambda i: preset_options[i], key="preset")
 
     default_mpn = default_desc = default_manuf = default_brands = ""
     if preset_idx and preset_idx > 0:
-        p = PRESETS[preset_idx - 1]
+        p = PRESETS[visible_indices[preset_idx - 1]]
         default_mpn = p.get("Mfg_Part_Num", "")
         default_desc = p.get("Part_Desc", "")
         default_manuf = p.get("Part_Manuf", "")
@@ -1026,9 +1105,23 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 
+selected_row = None
+if preset_idx and preset_idx > 0:
+    selected_row = PRESETS[visible_indices[preset_idx - 1]]
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+if selected_row:
+    st.markdown(f"""
+    <div class="xsection-head">
+        <div class="eyebrow">Source row / 6 fields</div>
+        <div class="body-mute">Selected from catalog</div>
+    </div>
+    <div class="xsource-grid">{render_source_row(selected_row)}</div>
+    """, unsafe_allow_html=True)
+
 if enrich_btn and desc.strip():
     brand_parts = [b.strip() for b in (brands or "").split("|")]
     row = {
