@@ -1,4 +1,4 @@
-# DECK CONTENT — Unilog Product Intelligence Engine ([TEAM NAME])
+# DECK CONTENT — Unilog Product Intelligence Engine (Codehunt)
 
 UniHack 2026 · Unilog challenge: "AI-Powered Product Intelligence for Industrial Commerce"
 
@@ -17,9 +17,9 @@ Leave exactly as provided by the template. This is the organizer's instruction s
 ---
 
 ## Slide 2 — Team Details
-- **Team name:** _[team name]_
-- **Team leader name:** _[team leader name]_
-- **Members:** _[names / roles]_
+- **Team name:** _Codehunt_
+- **Team leader name:** _Rajeev Kumar Tiwari_
+- **Members:** _Manish Kumar, Tarun Yadav, Divyanshu Tiwari_
 - **Project:** Unilog Product Intelligence Engine — cryptic distributor rows → complete,
   standardized, search-ready 252-column commerce records.
 - **One line:** *"AI reasons, deterministic rules enforce the spec — so no invented value ever ships."*
@@ -275,7 +275,7 @@ SN: Walk A → B → C in 20 seconds. The 100% compliance numbers are *structura
 ---
 
 ## Slide 15 — Closing
-**Unilog Product Intelligence Engine — [TEAM NAME]**
+**Unilog Product Intelligence Engine — Codehunt**
 - **Innovation:** AI proposes, deterministic rules enforce; anomaly detection; confidence-scored HITL.
 - **Accuracy of data:** 100% spec-compliance by construction + no unvalidated value ships.
 - **Quality of solution:** 9 auditable stages, full 252-col output, real evaluation harness.

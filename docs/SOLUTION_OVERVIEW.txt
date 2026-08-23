@@ -1,4 +1,4 @@
-Unilog Product Intelligence Engine — [TEAM NAME]
+Unilog Product Intelligence Engine — Codehunt
 
 PROBLEM. Distributors hand over cryptic rows: a part number, a telegraphic description ("PDSH4816AF Dishwasher SS - Display Only"), brand fields saying "-- Unbranded --". On Unilog's 1,000-row sample, 80% arrive with no brand and 9% name a distributor as the manufacturer. Each must become a complete, standardized 252-column record. Guesses are worse than blanks: the guide warns "a fluent description made of invented values scores zero."
 
