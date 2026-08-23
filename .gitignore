@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Secrets — never commit API keys
+.env
+.env.*
+*.key
+
+# Note: outputs/ is intentionally tracked as proof-of-run artifacts.
+# Regenerate anytime with `python3 run.py`.

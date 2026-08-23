@@ -1,0 +1,139 @@
+{
+  "input": "data/input_sample_1000.csv",
+  "rows": 1000,
+  "ai_path": false,
+  "model": null,
+  "elapsed_sec": 0.3,
+  "duplicate_groups": 1,
+  "ground_truth_scoring": {
+    "rows_compared": 2,
+    "key_fields_per_row": 8,
+    "exact_matches": 4,
+    "total_key_fields": 16,
+    "exact_match_rate": 0.25,
+    "mean_field_similarity": 0.608,
+    "detail": [
+      {
+        "Mfg_Part_Num": "PDSH4816AF",
+        "fields": {
+          "BRAND_NAME": {
+            "expected": "FRIGIDAIRE\u00ae",
+            "got": "FRIGIDAIRE\u00ae",
+            "exact": true,
+            "similarity": 1.0
+          },
+          "MANUFACTURER_NAME": {
+            "expected": "Rheem Manufacturing",
+            "got": "",
+            "exact": false,
+            "similarity": 0.0
+          },
+          "Classpath": {
+            "expected": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+            "got": "Appliances>Kitchen Appliances>Built-In Dishwashers",
+            "exact": false,
+            "similarity": 0.824
+          },
+          "Product Name": {
+            "expected": "Dishwasher",
+            "got": "Dishwasher",
+            "exact": true,
+            "similarity": 1.0
+          },
+          "SHORT_DESC": {
+            "expected": "FRIGIDAIRE\u00ae Professional Series PDSH4816AF Dishwasher With CleanBoost\u2122, Leg Mounting, 5-Wash Cycle, Stainless Steel",
+            "got": "FRIGIDAIRE\u00ae Professional Series PDSH4816AF Dishwasher",
+            "exact": false,
+            "similarity": 0.631
+          },
+          "LONG_DESC1": {
+            "expected": "FRIGIDAIRE\u00ae Dishwasher With CleanBoost\u2122, Professional Series, 5 Wash Cycles, 120 V, 15 A, Leg Mounting, 24 in W x 24-1/4 in D, 50-1/4 in Depth With Door Open, 8-1/2 in Upper Rack, 11-1/4 in Lower Rack Minimum Height, 10-3/8 in Upper Rack, 13-1/4 in Lower Rack Maximum Height, 47 dBA Sound Level, Stainless Steel, Additional Information: 240 kW-hr Annual Energy, 1 to 12 hr Delay Start Hours",
+            "got": "FRIGIDAIRE\u00ae Dishwasher, Professional Series",
+            "exact": false,
+            "similarity": 0.199
+          },
+          "MOBILE_DESC": {
+            "expected": "Rheem Manufacturing FRIGIDAIRE, Dishwasher, Professional Series, PDSH4816AF",
+            "got": "FRIGIDAIRE\u00ae, Dishwasher, Professional Series, PDSH4816AF",
+            "exact": false,
+            "similarity": 0.84
+          },
+          "INVOICE_DESC": {
+            "expected": "DISHWASHER LEG 5 SST 120V 15A 50-1/4IN",
+            "got": "DISHWASHER",
+            "exact": false,
+            "similarity": 0.417
+          }
+        },
+        "note": "MANUFACTURER_NAME intentionally withheld: input Part_Manuf is a distributor and the ground-truth value appears mismatched to the product."
+      },
+      {
+        "Mfg_Part_Num": "WDTS7024RZ",
+        "fields": {
+          "BRAND_NAME": {
+            "expected": "Whirlpool\u00ae",
+            "got": "Whirlpool\u00ae",
+            "exact": true,
+            "similarity": 1.0
+          },
+          "MANUFACTURER_NAME": {
+            "expected": "Whirlpool Corporation",
+            "got": "",
+            "exact": false,
+            "similarity": 0.0
+          },
+          "Classpath": {
+            "expected": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+            "got": "Appliances>Kitchen Appliances>Built-In Dishwashers",
+            "exact": false,
+            "similarity": 0.824
+          },
+          "Product Name": {
+            "expected": "Dishwasher",
+            "got": "Dishwasher",
+            "exact": true,
+            "similarity": 1.0
+          },
+          "SHORT_DESC": {
+            "expected": "Whirlpool\u00ae Eco Series WDTS7024RZ Dishwasher, Built-in Mounting, Stainless Steel, Stainless Steel",
+            "got": "Whirlpool\u00ae Eco Series WDTS7024RZ Dishwasher",
+            "exact": false,
+            "similarity": 0.619
+          },
+          "LONG_DESC1": {
+            "expected": "Whirlpool\u00ae Dishwasher, Eco Series, 120 V, 10 A, Built-in Mounting, 33-7/16 in H x 23-7/8 in W x 22-5/8 in D, 50-3/16 in Depth With Door Open, 33-7/16 in Minimum Height, 41 dBA Sound Level, Stainless Steel, Stainless Steel, Additional Information: Folding Tines, Leak Detection System, Moisture Repellent Silverware Basket, Normal Cycle, Quick Wash Cycle, Sani Rinse Option, Sensor Cycle, Triple Wash Spray",
+            "got": "Whirlpool\u00ae Dishwasher, Eco Series",
+            "exact": false,
+            "similarity": 0.151
+          },
+          "MOBILE_DESC": {
+            "expected": "Whirlpool, Dishwasher, Eco Series, WDTS7024RZ, Built-in Mounting",
+            "got": "Whirlpool\u00ae, Dishwasher, Eco Series, WDTS7024RZ",
+            "exact": false,
+            "similarity": 0.818
+          },
+          "INVOICE_DESC": {
+            "expected": "DISHWASHER BLTLN SST SST 120V 10A 41DBA",
+            "got": "DISHWASHER",
+            "exact": false,
+            "similarity": 0.408
+          }
+        },
+        "note": "MANUFACTURER_NAME intentionally withheld: input Part_Manuf is a distributor and the ground-truth value appears mismatched to the product."
+      }
+    ]
+  },
+  "compliance": {
+    "rows": 1000,
+    "ai_enriched_rows": 0,
+    "invoice_desc_caps_<=40_pct": 100.0,
+    "mobile_desc_in_60_80_pct": 0.0,
+    "long_desc_unit_compliant_pct": 100.0,
+    "brand_filled_pct": 11.2,
+    "classpath_resolved_pct": 8.4,
+    "avg_attributes_per_row": 0.3,
+    "rows_auto_shippable_pct": 0.7,
+    "rows_flagged_for_review": 993,
+    "mean_overall_confidence": 0.233
+  }
+}

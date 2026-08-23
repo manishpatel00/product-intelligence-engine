@@ -1,0 +1,11 @@
+Unilog Product Intelligence Engine — [TEAM NAME]
+
+PROBLEM. Distributors hand over cryptic rows: a part number, a telegraphic description ("PDSH4816AF Dishwasher SS - Display Only"), brand fields saying "-- Unbranded --". On Unilog's 1,000-row sample, 80% arrive with no brand and 9% name a distributor as the manufacturer. Each must become a complete, standardized 252-column record. Guesses are worse than blanks: the guide warns "a fluent description made of invented values scores zero."
+
+SOLUTION. A hybrid pipeline of 9 auditable stages: clean placeholders, de-duplicate, AI-classify the taxonomy, AI-extract attributes, enrich from mfr signals, normalize, build descriptions, resolve assets, validate. Principle: AI reasons, deterministic rules enforce the spec. Claude proposes every value under a forced JSON schema; a rules layer validates each against controlled vocabularies and char limits before it ships, so no hallucinated value survives. Units become approved abbreviations with one space ("24 in"); inch decimals convert to the fractions buyers search via an exact 1/64 table (50.25 -> 50-1/4 in). The same item, five ways: INVOICE_DESC (<=40, CAPS), MOBILE_DESC (60-80), SHORT_DESC, LONG_DESC1, MARKETING.
+
+TRUST. Every field carries a 0-1 confidence. Low-confidence fields aren't guessed; they route to a human-review queue with a specific reason. An anomaly detector catches the trap the brief warns of: for PDSH4816AF the "manufacturer" is a distributor co-op and the given brand mismatches, so the engine withholds and flags it rather than ship a wrong value.
+
+SCALE. Zero-dependency pure-Python stdlib calling Claude over HTTPS; with no API key it degrades to a deterministic pass and never hard-fails. De-dup collapses repeat SKUs before any LLM spend; per-row cost is bounded; stages are cacheable and parallel. Runs the full 1,000-row sample.
+
+METRICS. 100% char-limit/casing and approved-UOM compliance by construction; field accuracy vs ground truth; attribute fill-rate; % auto-shipped vs flagged with reasons.

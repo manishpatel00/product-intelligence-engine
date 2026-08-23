@@ -1,0 +1,14 @@
+# Unilog Product Intelligence Engine — dependencies
+# ==================================================
+# NONE. This project runs on the Python 3 standard library only
+# (csv, json, re, urllib, concurrent.futures, http.server).
+#
+#   python3 run.py            # batch enrichment  — zero install
+#   python3 app/server.py     # live web demo     — zero install
+#
+# The Claude API is called directly over HTTPS via urllib, so the official
+# `anthropic` SDK is NOT required. Set ANTHROPIC_API_KEY to enable the AI path;
+# without it the engine falls back to a deterministic pass (same output contract).
+#
+# There is deliberately nothing to `pip install` here — that is the point:
+# it runs anywhere Python 3 does.
