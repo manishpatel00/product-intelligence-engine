@@ -102,18 +102,34 @@ div[data-testid="stStatusWidget"] {
     display: none !important;
 }
 
+/* Streamlit Header (contains sidebar toggle) */
+header[data-testid="stHeader"] {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
 /* Keep sidebar toggle visible, style it to match */
 button[data-testid="stSidebarCollapseButton"],
 button[data-testid="collapsedControl"] {
     color: var(--ink) !important;
 }
 
-/* Collapsed sidebar arrow button — always visible */
+/* Collapsed sidebar arrow/hamburger button — always visible */
 div[data-testid="stSidebarCollapsedControl"] {
     color: var(--ink) !important;
-    background: var(--canvas-card) !important;
-    border: 1px solid var(--hairline) !important;
-    border-radius: var(--rounded-sm) !important;
+    background: var(--canvas) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: var(--rounded-pill) !important;
+    padding: var(--sp-xs) !important;
+    margin: var(--sp-md) !important;
+    z-index: 999999 !important;
+    box-shadow: none !important;
+}
+
+/* Sidebar toggle icon */
+div[data-testid="stSidebarCollapsedControl"] svg {
+    fill: var(--ink) !important;
+    color: var(--ink) !important;
 }
 
 .stApp {
@@ -595,6 +611,49 @@ div[data-testid="stAlert"] {
 
 .xstep-text span {
     color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE (Mobile < 768px)
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .display-xl {
+        font-size: 48px !important;
+        line-height: 48px !important;
+        letter-spacing: -1.2px !important;
+    }
+    
+    .xkv {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin-bottom: var(--sp-lg);
+    }
+    .xkv-key {
+        margin-top: var(--sp-sm);
+    }
+    
+    .x252 {
+        columns: 1;
+    }
+    
+    div[data-testid="stMetric"] {
+        padding: var(--sp-md) !important;
+    }
+    
+    .xcard {
+        padding: var(--sp-md) !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP TWEAKS (Advanced typography scaling)
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+    .display-xl {
+        font-size: 72px; /* Scale up for desktop hero */
+        line-height: 72px;
+        letter-spacing: -1.8px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
