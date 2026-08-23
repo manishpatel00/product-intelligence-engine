@@ -94,12 +94,26 @@ div[data-testid="stDecoration"] {
     font-weight: 400 !important;
 }
 
-/* Kill Streamlit chrome */
-#MainMenu, footer, header,
+/* Kill Streamlit chrome (keep header for sidebar toggle) */
+#MainMenu, footer,
 div[data-testid="stToolbar"],
 div[data-testid="stDecoration"],
 div[data-testid="stStatusWidget"] {
     display: none !important;
+}
+
+/* Keep sidebar toggle visible, style it to match */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="collapsedControl"] {
+    color: var(--ink) !important;
+}
+
+/* Collapsed sidebar arrow button — always visible */
+div[data-testid="stSidebarCollapsedControl"] {
+    color: var(--ink) !important;
+    background: var(--canvas-card) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--rounded-sm) !important;
 }
 
 .stApp {
