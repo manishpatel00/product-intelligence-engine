@@ -106,6 +106,7 @@ div[data-testid="stStatusWidget"] {
 header[data-testid="stHeader"] {
     background-color: transparent !important;
     background-image: none !important;
+    height: 0 !important;
 }
 
 /* Keep sidebar toggle visible, style it to match */
@@ -139,8 +140,10 @@ div[data-testid="stSidebarCollapsedControl"] svg {
 /* Main container */
 .stMainBlockContainer,
 div[data-testid="stAppViewBlockContainer"] {
-    max-width: 1200px;
-    padding-top: var(--sp-3xl) !important;
+    max-width: 1240px;
+    padding: 24px 32px 72px !important;
+    margin: 0 auto !important;
+    overflow-x: hidden !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -149,10 +152,12 @@ div[data-testid="stAppViewBlockContainer"] {
 section[data-testid="stSidebar"] {
     background: var(--canvas) !important;
     border-right: 1px solid var(--hairline) !important;
+    min-width: 292px !important;
+    max-width: 292px !important;
 }
 
 section[data-testid="stSidebar"] > div {
-    padding-top: var(--sp-3xl) !important;
+    padding: 24px 20px 32px !important;
 }
 
 /* Sidebar labels — Geist Mono uppercase */
@@ -569,9 +574,50 @@ div[data-testid="stAlert"] {
 
 /* Hero header */
 .xhero {
-    padding: 0 0 var(--sp-3xl) 0;
+    padding: 8px 0 40px;
     border-bottom: 1px solid var(--hairline);
-    margin-bottom: var(--sp-2xl);
+    margin-bottom: 30px;
+}
+
+.xutility {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 34px;
+}
+
+.xbrand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.xbrand-mark {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 50%;
+    color: var(--accent-sunset);
+    font-size: 13px;
+}
+
+.xutility-meta {
+    color: var(--body-mid);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-align: right;
 }
 
 .xhero-sub {
@@ -581,6 +627,29 @@ div[data-testid="stAlert"] {
     line-height: 24px;
     color: var(--body-mid);
     margin-top: var(--sp-sm);
+    max-width: 760px;
+}
+
+.xhero-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 40px;
+    align-items: end;
+}
+
+.xhero-status {
+    border-left: 1px solid var(--hairline);
+    padding-left: 20px;
+    padding-bottom: 4px;
+}
+
+.xhero-status-value {
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 8px;
 }
 
 /* Pipeline step */
@@ -613,10 +682,102 @@ div[data-testid="stAlert"] {
     color: var(--ink);
 }
 
+.xsidebar-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.xsidebar-title {
+    color: var(--ink);
+    font-size: 18px;
+    letter-spacing: -0.3px;
+}
+
+.xsidebar-index {
+    color: var(--accent-sunset);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RESPONSIVE (Mobile < 768px)
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
+    .stMainBlockContainer,
+    div[data-testid="stAppViewBlockContainer"] {
+        padding: 16px 16px 48px !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        min-width: min(88vw, 320px) !important;
+        max-width: min(88vw, 320px) !important;
+    }
+
+    section[data-testid="stSidebar"] > div {
+        padding: 20px 16px 28px !important;
+    }
+
+    .xutility {
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+    }
+
+    .xutility-meta {
+        display: none;
+    }
+
+    .xhero {
+        padding-bottom: 28px;
+        margin-bottom: 22px;
+    }
+
+    .xhero-row {
+        display: block;
+    }
+
+    .xhero-status {
+        border-left: 0;
+        border-top: 1px solid var(--hairline);
+        margin-top: 24px;
+        padding: 16px 0 0;
+    }
+
+    .xhero-sub {
+        font-size: 15px;
+        line-height: 22px;
+    }
+
+    .xcard {
+        overflow: hidden;
+    }
+
+    .xtable {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .xstep {
+        gap: 10px;
+    }
+
+    .xstep-text {
+        line-height: 20px;
+    }
+
+    .stButton > button,
+    .stDownloadButton > button {
+        min-height: 44px !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] {
+        gap: 12px !important;
+    }
+
     .display-xl {
         font-size: 48px !important;
         line-height: 48px !important;
@@ -653,6 +814,17 @@ div[data-testid="stAlert"] {
         font-size: 72px; /* Scale up for desktop hero */
         line-height: 72px;
         letter-spacing: -1.8px;
+    }
+}
+
+@media (max-width: 420px) {
+    .display-xl {
+        font-size: 40px !important;
+        line-height: 42px !important;
+    }
+
+    .xcard {
+        padding: 16px !important;
     }
 }
 </style>
@@ -717,12 +889,27 @@ pill_class = "xpill xpill-on" if ai_on else "xpill xpill-off"
 pill_text = f"Claude AI · {llm_client.DEFAULT_MODEL}" if ai_on else "Deterministic fallback"
 
 st.markdown(f"""
+<div class="xutility">
+    <div class="xbrand">
+        <span class="xbrand-mark">U</span>
+        <span>Unilog / Product Intelligence</span>
+    </div>
+    <div class="xutility-meta">Delivery format / 252 fields</div>
+</div>
 <div class="xhero">
-    <div class="eyebrow">Unilog Product Intelligence Engine</div>
-    <div class="display-xl">messy row → 252 columns</div>
-    <div class="xhero-sub">
-        Turn one cryptic distributor row into a complete, standardised, search-ready commerce record.
-        AI reasons — deterministic rules enforce the spec.
+    <div class="xhero-row">
+        <div>
+            <div class="eyebrow">Unilog Product Intelligence Engine</div>
+            <div class="display-xl">messy row → 252 columns</div>
+            <div class="xhero-sub">
+                Turn one cryptic distributor row into a complete, standardised, search-ready commerce record.
+                AI reasons — deterministic rules enforce the spec.
+            </div>
+        </div>
+        <div class="xhero-status">
+            <div class="eyebrow">Engine status</div>
+            <div class="xhero-status-value">{pill_text}</div>
+        </div>
     </div>
     <div style="margin-top: var(--sp-lg)">
         <span class="{pill_class}">{pill_text}</span>
@@ -737,7 +924,15 @@ st.markdown(f"""
 # Sidebar
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown('<div class="eyebrow" style="margin-bottom:var(--sp-xl)">Input row</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="xsidebar-head">
+        <div>
+            <div class="eyebrow" style="margin-bottom:6px">Control deck</div>
+            <div class="xsidebar-title">Input row</div>
+        </div>
+        <div class="xsidebar-index">01 / 01</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     preset_options = ["— choose —"] + [
         f"{(p.get('Mfg_Part_Num') or 'row')[:18]} — {(p.get('Part_Desc') or '')[:34]}"
