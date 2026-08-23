@@ -632,7 +632,7 @@ div[data-testid="stAlert"] {
 
 .xhero-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(0, 1fr) 190px;
     gap: 40px;
     align-items: end;
 }
@@ -650,6 +650,50 @@ div[data-testid="stAlert"] {
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-top: 8px;
+}
+
+.xmetric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-sm);
+    overflow: hidden;
+    margin-bottom: var(--sp-lg);
+}
+
+.xmetric-cell {
+    min-width: 0;
+    background: var(--canvas-card);
+    padding: 18px 20px;
+}
+
+.xmetric-value {
+    color: var(--ink);
+    font-size: 28px;
+    line-height: 32px;
+    letter-spacing: -0.8px;
+    margin-top: 8px;
+}
+
+.xmetric-note {
+    color: var(--body-mid);
+    font-size: 12px;
+    line-height: 18px;
+    margin-top: 4px;
+}
+
+.xsection-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.xsection-head .eyebrow {
+    margin-bottom: 0;
 }
 
 /* Pipeline step */
@@ -739,6 +783,14 @@ div[data-testid="stAlert"] {
         display: block;
     }
 
+    .xmetric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .xmetric-cell {
+        padding: 14px 16px;
+    }
+
     .xhero-status {
         border-left: 0;
         border-top: 1px solid var(--hairline);
@@ -826,6 +878,10 @@ div[data-testid="stAlert"] {
     .xcard {
         padding: 16px !important;
     }
+
+    .xmetric-value {
+        font-size: 24px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -912,7 +968,6 @@ st.markdown(f"""
         </div>
     </div>
     <div style="margin-top: var(--sp-lg)">
-        <span class="{pill_class}">{pill_text}</span>
         <span class="xpill" style="margin-left:8px">Team Codehunt</span>
         <span class="xpill" style="margin-left:8px">UniHack 2026</span>
     </div>
@@ -1143,8 +1198,37 @@ elif enrich_btn and not desc.strip():
 else:
     # ── Landing ─────────────────────────────────────────────
     st.markdown("""
+    <div class="xsection-head">
+        <div class="eyebrow">Workspace overview</div>
+        <div class="body-mute">Ready for a source row</div>
+    </div>
+    <div class="xmetric-grid">
+        <div class="xmetric-cell">
+            <div class="eyebrow">Input shape</div>
+            <div class="xmetric-value">1 row</div>
+            <div class="xmetric-note">messy distributor data</div>
+        </div>
+        <div class="xmetric-cell">
+            <div class="eyebrow">Output shape</div>
+            <div class="xmetric-value">252</div>
+            <div class="xmetric-note">standardised fields</div>
+        </div>
+        <div class="xmetric-cell">
+            <div class="eyebrow">Pipeline</div>
+            <div class="xmetric-value">09</div>
+            <div class="xmetric-note">auditable stages</div>
+        </div>
+        <div class="xmetric-cell">
+            <div class="eyebrow">Quality gate</div>
+            <div class="xmetric-value">100%</div>
+            <div class="xmetric-note">rules enforce the spec</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
     <div class="xcard">
-        <div class="eyebrow">Ready</div>
+        <div class="eyebrow">01 / Start with a source row</div>
         <div class="display-sm" style="margin-bottom:var(--sp-md)">
             Pick a sample row or type one, then press Enrich →
         </div>
@@ -1159,7 +1243,7 @@ else:
     # Pipeline overview
     st.markdown("""
     <div class="xcard">
-        <div class="eyebrow">9-stage pipeline</div>
+        <div class="eyebrow">02 / 9-stage pipeline</div>
         <div style="margin-top:var(--sp-md)">
             <div class="xstep">
                 <span class="xstep-num xstep-ai">01</span>
