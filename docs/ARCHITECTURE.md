@@ -140,17 +140,214 @@ Because the sandbox cannot reach the live API or bind a socket, correctness is p
   `handle_enrich`) — 252-column contract, JSON serialization, graceful error handling on bad input —
   without opening a port.
 
-## 10. Data flow (one row)
+## 10. Full system architecture (one row, end-to-end)
 
 ```
-row(6) ─ ingest/clean ─ (dedup) ─► enrich_row ──(key?)──► Claude (forced JSON) ─┐
-                                        └────(no key)────► deterministic draft ─┤
-                                                                                ▼
-                                                              draft{values, confidence, reasons}
-                                                                                │
-                          normalize units/fractions · build 5 descs · map to 252 cols
-                                                                                │
-                                                    validate + score + route ───┤
-                                                                                ▼
-                                        (record: 252 cols)   +   (qa: confidence + review reasons)
+╔══════════════════════════════════════════════════════════════════════════════════════════╗
+║                         UNILOG PRODUCT INTELLIGENCE ENGINE                              ║
+║                   "AI reasons — deterministic rules enforce the spec"                   ║
+╚══════════════════════════════════════════════════════════════════════════════════════════╝
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  INPUT: RAW DISTRIBUTOR ROW  (6 sparse fields)              │
+  │  ┌──────────┬────────────────────────────────┬────────────┐ │
+  │  │ MPN      │ Part_Desc                      │ E1_Brand   │ │
+  │  │ PDSH4816 │ "PDSH4816AF Dishwasher SS -    │ --Unbrand--│ │
+  │  │ AF       │  Display Only"                 │            │ │
+  │  ├──────────┼────────────────────────────────┼────────────┤ │
+  │  │ Unilog_  │ DIB_Brand                      │ Part_Manuf │ │
+  │  │ Brand    │ --No DIB Brand--               │ Appliance  │ │
+  │  │ --No--   │                                │ Dealers    │ │
+  │  │          │                                │ Co-op      │ │
+  │  └──────────┴────────────────────────────────┴────────────┘ │
+  └──────────────────────────┬──────────────────────────────────┘
+                             │
+         ════════════════════╪═══════════════════════════════
+          STAGE 1: INGEST &  │  CLEAN   [src/pipeline.py]
+         ════════════════════╪═══════════════════════════════
+                             ▼
+                ┌────────────────────────┐
+                │  Strip placeholders:   │
+                │  "--Unbranded--" → ""  │
+                │  "--No DIB Brand--"→"" │
+                │  Trim · lowercase tags │
+                └───────────┬────────────┘
+                            │
+         ═══════════════════╪═══════════════════════════════
+          STAGE 2: DE-DUP   │   [run.py → find_duplicates]
+         ═══════════════════╪═══════════════════════════════
+                            ▼
+                ┌────────────────────────┐
+                │  Group by Part_Desc    │
+                │  hash → collapse       │  ◄── Saves LLM spend:
+                │  repeat SKUs           │      enrich once,
+                │  duplicate_report.json │      fan-out after
+                └───────────┬────────────┘
+                            │
+                            │  unique row
+                            ▼
+     ┌──────────────────────────────────────────────────────────┐
+     │                  ANTHROPIC_API_KEY set?                  │
+     │                                                          │
+     │          ┌──── YES ────┐        ┌──── NO ────┐           │
+     │          ▼             │        ▼            │           │
+     │   ┌─────────────┐     │  ┌───────────────┐  │           │
+     │   │ AI PATH     │     │  │ DETERMINISTIC │  │           │
+     │   │ ai_used=True│     │  │ FALLBACK      │  │           │
+     │   └──────┬──────┘     │  │ ai_used=False │  │           │
+     │          │             │  └───────┬───────┘  │           │
+     └──────────┼─────────────┘──────────┼──────────┘───────────┘
+                │                        │
+                ▼                        ▼
+  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+  ┃░░░░░░░░░░░░░  AI PROPOSES  (Claude, forced JSON)  ░░░░░░░░░░░░░░░┃
+  ┃░░░░░░░░░░░░░░░░░░░ [src/ai_enrich.py]  ░░░░░░░░░░░░░░░░░░░░░░░░░┃
+  ┃                                                                   ┃
+  ┃  ┌──────────────────────────────────────────────────────────────┐  ┃
+  ┃  │  SYSTEM PROMPT (anti-hallucination contract):               │  ┃
+  ┃  │  • "Leave blank + lower confidence — NEVER invent"          │  ┃
+  ┃  │  • UOM: approved abbrev + 1 space ("24 in", "120 V")       │  ┃
+  ┃  │  • Source: mfr sites ONLY (no Amazon/eBay)                  │  ┃
+  ┃  │  • 5 description formulas + brand casing rules              │  ┃
+  ┃  └──────────────────────────────────────────────────────────────┘  ┃
+  ┃                              │                                    ┃
+  ┃                              ▼                                    ┃
+  ┃  ┌──────────────────────────────────────────────────────────────┐  ┃
+  ┃  │  FORCED TOOL-USE  (tool_choice: required)                   │  ┃
+  ┃  │  ┌────────────────────────────────────────────────────────┐  │  ┃
+  ┃  │  │  input_schema = {                                      │  │  ┃
+  ┃  │  │    product_type, classpath, dept, class, fine,          │  │  ┃
+  ┃  │  │    brand_name, manufacturer_name, series, unspsc,      │  │  ┃
+  ┃  │  │    attributes: [{label, value, uom}],                  │  │  ┃
+  ┃  │  │    invoice_desc, mobile_desc, short_desc,              │  │  ┃
+  ┃  │  │    long_desc1, marketing_description,                  │  │  ┃
+  ┃  │  │    confidence: {brand, classpath, attributes, …},      │  │  ┃
+  ┃  │  │    review_reasons: []                                  │  │  ┃
+  ┃  │  │  }                                                     │  │  ┃
+  ┃  │  └────────────────────────────────────────────────────────┘  │  ┃
+  ┃  └──────────────────────────────────────────────────────────────┘  ┃
+  ┃                              │                                    ┃
+  ┃                              ▼                                    ┃
+  ┃  ┌──────────────────────────────────────────────────────────────┐  ┃
+  ┃  │  llm_client.py  (zero-dep, urllib HTTPS)                    │  ┃
+  ┃  │  POST /v1/messages → parse tool_use block                   │  ┃
+  ┃  │  Retry: exponential backoff on 429 / 5xx / 529              │  ┃
+  ┃  └──────────────────────────────────────────────────────────────┘  ┃
+  ┃                                                                   ┃
+  ┣━━━ STAGE 3: CLASSIFY ─── Classpath / Dept / Class / Fine ━━━━━━━━┫
+  ┣━━━ STAGE 4: EXTRACT  ─── {label, value, uom}[]  ━━━━━━━━━━━━━━━━┫
+  ┣━━━ STAGE 5: ENRICH   ─── brand / MPN-prefix / mfr signals ━━━━━━┫
+  ┃                                                                   ┃
+  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                               │
+                               │  draft { values, confidence{}, review_reasons[] }
+                               ▼
+  ╔════════════════════════════════════════════════════════════════════╗
+  ║▓▓▓▓▓▓▓▓  DETERMINISTIC RULES ENFORCE  (pure Python)  ▓▓▓▓▓▓▓▓▓▓║
+  ║▓▓▓▓▓▓▓▓▓▓▓▓▓  THE TRUST GATE  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓║
+  ║                                                                  ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   STAGE 6: NORMALIZE  [src/normalize.py]                        ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   ┌─────────────────────┐  ┌──────────────────────────────────┐  ║
+  ║   │  Unit Standardize   │  │  Decimal → Fraction (1/64 tbl)  │  ║
+  ║   │  "24in"  → "24 in"  │  │  50.25 in → "50-1/4 in"        │  ║
+  ║   │  "120VOLTS"→"120 V" │  │  0.5 in  → "1/2 in"            │  ║
+  ║   │                     │  │                                  │  ║
+  ║   │  _NUM_UNIT_RE regex │  │  Exact table, reduced fractions  │  ║
+  ║   │  + APPROVED_UOM map │  │  ±1/128 tolerance               │  ║
+  ║   └─────────────────────┘  └──────────────────────────────────┘  ║
+  ║                                                                  ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   STAGE 7: BUILD 5 DESCRIPTIONS  [src/pipeline.py]              ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   ┌──────────────────┬──────────┬────────────────────────────┐   ║
+  ║   │ Field            │ Limit    │ Enforcement                │   ║
+  ║   ├──────────────────┼──────────┼────────────────────────────┤   ║
+  ║   │ INVOICE_DESC     │ ≤40 char │ ALL CAPS + compressed UOM  │   ║
+  ║   │ MOBILE_DESC      │ 60-80 ch │ Title Case                 │   ║
+  ║   │ SHORT_DESC       │ ~120 ch  │ Title / listing line       │   ║
+  ║   │ LONG_DESC1       │ full     │ Attribute formula + UOMs   │   ║
+  ║   │ MARKETING_DESC   │ prose    │ Benefit-led copy           │   ║
+  ║   └──────────────────┴──────────┴────────────────────────────┘   ║
+  ║   Word-boundary trim · enforce_limit(text, n, upper=bool)       │
+  ║                                                                  ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   STAGE 8: RESOLVE ASSETS  [src/pipeline.py]                    ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   URLs / images → validated or flagged unresolved                ║
+  ║                                                                  ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║   STAGE 9: VALIDATION GATE  [src/pipeline.py]                   ║
+  ║  ══════════════════════════════════════════════════════════════   ║
+  ║                                                                  ║
+  ║   ┌──────────────────────────────────────────────────────────┐   ║
+  ║   │  Structural checks:                                      │   ║
+  ║   │    INVOICE_DESC ≤40? CAPS? ✓                             │   ║
+  ║   │    MOBILE_DESC 60-80?      ✓                             │   ║
+  ║   │    LONG_DESC1 units OK?    ✓  ← units_are_compliant()   │   ║
+  ║   │    Brand / classpath filled? Must-haves present?         │   ║
+  ║   ├──────────────────────────────────────────────────────────┤   ║
+  ║   │  Anomaly checks  [src/lookups.py → parse_manufacturer]: │   ║
+  ║   │    DISTRIBUTOR_SIGNAL_WORDS scan ──┐                     │   ║
+  ║   │    "cooperative","supply","LLC"    │                     │   ║
+  ║   │    "distribution","industrial"    ▼                     │   ║
+  ║   │    ┌────────────────────────────────────┐               │   ║
+  ║   │    │ is_distributor = True ?            │               │   ║
+  ║   │    │  YES → MANUFACTURER_NAME withheld  │               │   ║
+  ║   │    │        + reason added              │               │   ║
+  ║   │    │  NO  → pass through                │               │   ║
+  ║   │    └────────────────────────────────────┘               │   ║
+  ║   ├──────────────────────────────────────────────────────────┤   ║
+  ║   │  Confidence scoring:                                     │   ║
+  ║   │    field_conf = { brand, classpath, attrs, descs, mfr }  │   ║
+  ║   │    overall = mean(field_conf)                            │   ║
+  ║   ├──────────────────────────────────────────────────────────┤   ║
+  ║   │  Routing decision:                                       │   ║
+  ║   │    overall ≥ 0.6 AND no anomaly AND no failures          │   ║
+  ║   │         │                    │                            │   ║
+  ║   │       ┌─┴─┐              ┌──┴──┐                         │   ║
+  ║   │       │YES│              │ NO  │                          │   ║
+  ║   │       └─┬─┘              └──┬──┘                          │   ║
+  ║   │         ▼                   ▼                             │   ║
+  ║   │    AUTO-SHIP          REVIEW QUEUE                       │   ║
+  ║   │                       + specific reasons[]               │   ║
+  ║   └──────────────────────────────────────────────────────────┘   ║
+  ║                                                                  ║
+  ╚══════════════════════════════════╤═══════════════════════════════╝
+                                     │
+              ┌──────────────────────┼─────────────────────────┐
+              │                      │                         │
+              ▼                      ▼                         ▼
+  ┌───────────────────┐  ┌──────────────────────┐  ┌──────────────────┐
+  │ 252-COLUMN RECORD │  │ QA OBJECT            │  │ EVALUATION       │
+  │                   │  │                      │  │ [src/evaluate.py]│
+  │ enriched_output   │  │ overall_confidence   │  │                  │
+  │ .csv / .xlsx      │  │ needs_human_review   │  │ Ground-truth     │
+  │                   │  │ field_confidence{}   │  │ scoring + batch  │
+  │ schema.py:        │  │ distributor_detected │  │ compliance report│
+  │ DELIVERY_HEADERS  │  │ n_attributes         │  │                  │
+  │ assert len == 252 │  │ checks{}             │  │ evaluation_      │
+  │                   │  │ review_reasons[]     │  │ summary.json     │
+  │ blank_record() →  │  │                      │  │                  │
+  │ pre-seeded dict   │  │ → qa_review_report   │  │ Field accuracy,  │
+  │ (superset-safe)   │  │   .csv               │  │ compliance %,    │
+  │                   │  │                      │  │ fill-rate, stats │
+  └───────────────────┘  └──────────────────────┘  └──────────────────┘
+
+  ┌────────────────────────────────────────────────────────────────────┐
+  │  CROSS-CUTTING CONCERNS                                           │
+  │                                                                    │
+  │  ┌────────────────┐  ┌────────────────┐  ┌──────────────────────┐ │
+  │  │ Parallelism    │  │ Idempotency    │  │ Data-driven growth   │ │
+  │  │ ThreadPool     │  │ Each row is    │  │ New brand/UOM/dist = │ │
+  │  │ Executor       │  │ independent +  │  │ lookup table edit,   │ │
+  │  │ (I/O-bound)    │  │ reprocessable  │  │ NOT code change      │ │
+  │  └────────────────┘  └────────────────┘  └──────────────────────┘ │
+  │  ┌────────────────┐  ┌────────────────┐  ┌──────────────────────┐ │
+  │  │ Model tiering  │  │ Caching        │  │ Graceful degrade     │ │
+  │  │ Sonnet ↔ Haiku │  │ Per-stage,     │  │ No key → determ.     │ │
+  │  │ via env var    │  │ unchanged=free │  │ fallback, same API   │ │
+  │  └────────────────┘  └────────────────┘  └──────────────────────┘ │
+  └────────────────────────────────────────────────────────────────────┘
 ```

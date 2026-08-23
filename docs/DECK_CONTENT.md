@@ -173,25 +173,109 @@ SN: Optional slide — keep it to the two views; the real proof is Slide 12.
 **[SCALABILITY] [QUALITY]** — the headline principle: **AI reasons, deterministic rules enforce.**
 
 ```
-                         ┌───────────────────────────────┐
-  Input CSV/XLSX  ─────▶ │  run.py  (stdlib, parallel)   │ ─────▶  enriched_output.csv (252 cols)
-  (any layout)           │  ThreadPool over rows          │ ─────▶  qa_review_report.csv
-                         └───────────────┬───────────────┘ ─────▶  duplicate_report.json
-                                         │                  ─────▶  evaluation_summary.json
-              ┌──────────────────────────┼───────────────────────────┐
-              ▼                           ▼                           ▼
-   ┌───────────────────┐    ┌──────────────────────────┐   ┌────────────────────┐
-   │  pipeline.py       │    │  ai_enrich.py            │   │  llm_client.py     │
-   │  9-stage orchestr. │◀──▶│  prompt + forced schema  │──▶│  Claude via urllib │
-   │                    │    │  (Claude PROPOSES)       │   │  (HTTPS, retries)  │
-   └─────────┬──────────┘    └──────────────────────────┘   └─────────┬──────────┘
-             │  enforces spec                                          │ no API key?
-             ▼                                                         ▼
-   ┌────────────────────────────┐   ┌───────────────────┐   ┌────────────────────────┐
-   │ normalize.py  (units,      │   │ lookups.py         │   │ DETERMINISTIC FALLBACK │
-   │ fractions, limits, casing) │◀─▶│ UOM / brand / dist │   │ same contract, no fail │
-   │ + validation gate + conf.  │   │ / 1-64 fraction tbl│   └────────────────────────┘
-   └────────────────────────────┘   └───────────────────┘
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              UNILOG PRODUCT INTELLIGENCE ENGINE — Architecture             ║
+║            "AI reasons — deterministic rules enforce the spec"             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+         Input CSV/XLSX                                            OUTPUTS
+       ┌──────────────┐                                   ┌───────────────────┐
+       │ Any column   │                                   │ enriched_output   │
+       │ layout       │                                   │ .csv / .xlsx      │
+       │ (6 raw cols) │                                   │ (252 cols)        │
+       └──────┬───────┘                                   ├───────────────────┤
+              │                                           │ qa_review_report  │
+              ▼                                           │ .csv              │
+  ┌────────────────────────────┐                          ├───────────────────┤
+  │      run.py                │                          │ duplicate_report  │
+  │  ┌──────────────────────┐  │                          │ .json             │
+  │  │  ThreadPoolExecutor  │  │                          ├───────────────────┤
+  │  │  (parallel per-row)  │  │                          │ evaluation_       │
+  │  └──────────┬───────────┘  │                          │ summary.json      │
+  └─────────────┼──────────────┘                          └───────────────────┘
+                │                                                  ▲
+                │ per unique row                                   │
+                ▼                                                  │
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━┓
+┃  pipeline.py — 9-STAGE ORCHESTRATOR                                        ┃
+┃                                                                             ┃
+┃  ┌─────────────────────────────────────────────────────────────────────┐    ┃
+┃  │ [1] INGEST & CLEAN           [2] DE-DUPLICATE                     │    ┃
+┃  │  strip "--Unbranded--"→""     collapse repeat Part_Desc hashes    │    ┃
+┃  │  trim whitespace, tags        → saves all downstream LLM spend    │    ┃
+┃  └─────────────────────────────────────────┬───────────────────────────┘    ┃
+┃                                            │                               ┃
+┃                                            ▼                               ┃
+┃               ┌──────────── ANTHROPIC_API_KEY? ────────────┐               ┃
+┃               │                                            │               ┃
+┃           SET │                                    UNSET   │               ┃
+┃               ▼                                            ▼               ┃
+┃  ┌─────────────────────────────┐          ┌────────────────────────────┐   ┃
+┃  │░░░ AI PATH (ai_used=True) ░░│          │ DETERMINISTIC FALLBACK    │   ┃
+┃  │                              │          │ (ai_used=False)           │   ┃
+┃  │  ai_enrich.py                │          │                          │   ┃
+┃  │  ┌────────────────────────┐  │          │ • MPN-prefix brand hint  │   ┃
+┃  │  │ System Prompt:         │  │          │ • Placeholder cleaning   │   ┃
+┃  │  │ • Anti-hallucination   │  │          │ • Best-effort attributes │   ┃
+┃  │  │ • UOM rules            │  │          │ • Low confidence → flag  │   ┃
+┃  │  │ • Sourcing (mfr only)  │  │          │                          │   ┃
+┃  │  │ • 5 desc formulas      │  │          │ Same draft contract.     │   ┃
+┃  │  └────────────┬───────────┘  │          │ Never hard-fails.        │   ┃
+┃  │               ▼              │          └─────────────┬────────────┘   ┃
+┃  │  ┌────────────────────────┐  │                        │               ┃
+┃  │  │ llm_client.py          │  │                        │               ┃
+┃  │  │ • urllib HTTPS (0 dep) │  │                        │               ┃
+┃  │  │ • Forced tool_choice   │  │                        │               ┃
+┃  │  │ • Retry 429/5xx/529    │  │                        │               ┃
+┃  │  │ • temp=0, ~2.6k tok   │  │                        │               ┃
+┃  │  └────────────┬───────────┘  │                        │               ┃
+┃  │               │              │                        │               ┃
+┃  │ [3] CLASSIFY  │ Classpath    │                        │               ┃
+┃  │ [4] EXTRACT   │ Attributes   │                        │               ┃
+┃  │ [5] ENRICH    │ Brand/MPN    │                        │               ┃
+┃  └───────────────┼──────────────┘                        │               ┃
+┃                  │                                       │               ┃
+┃                  └──────────────┬─────────────────────────┘               ┃
+┃                                │                                         ┃
+┃                 draft { values, confidence{}, review_reasons[] }         ┃
+┃                                │                                         ┃
+┃  ╔═════════════════════════════╧══════════════════════════════════════╗   ┃
+┃  ║▓▓▓▓▓▓  DETERMINISTIC TRUST GATE (pure Python)  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓║   ┃
+┃  ║                                                                   ║   ┃
+┃  ║  [6] NORMALIZE  ──── normalize.py ────────────────────────────    ║   ┃
+┃  ║       │  Unit standardize:  "24in" → "24 in"                     ║   ┃
+┃  ║       │  Decimal→fraction:  50.25  → "50-1/4"   (1/64 table)    ║   ┃
+┃  ║       │  Approved UOM map + _NUM_UNIT_RE regex                   ║   ┃
+┃  ║       │                                                           ║   ┃
+┃  ║  [7] BUILD 5 DESCRIPTIONS ────────────────────────────────────    ║   ┃
+┃  ║       │  INVOICE_DESC ≤40 CAPS │ MOBILE 60-80 │ SHORT ~120      ║   ┃
+┃  ║       │  LONG_DESC1 (formula)  │ MARKETING (prose)              ║   ┃
+┃  ║       │  enforce_limit() + word-boundary trim                    ║   ┃
+┃  ║       │                                                           ║   ┃
+┃  ║  [8] RESOLVE ASSETS ── URLs/images validated or flagged ──────    ║   ┃
+┃  ║       │                                                           ║   ┃
+┃  ║  [9] VALIDATION GATE ────────────────────────────────────────    ║   ┃
+┃  ║       │  Structural:  limits ✓  casing ✓  UOM compliance ✓      ║   ┃
+┃  ║       │  Anomaly:     distributor scan (lookups.py)              ║   ┃
+┃  ║       │               ┌─── is_distributor? ───┐                  ║   ┃
+┃  ║       │               │YES: withhold + reason │                  ║   ┃
+┃  ║       │               │NO:  pass through      │                  ║   ┃
+┃  ║       │               └───────────────────────┘                  ║   ┃
+┃  ║       │  Confidence:  field scores → overall = mean              ║   ┃
+┃  ║       │  Route:       ≥0.6 + clean → AUTO-SHIP                  ║   ┃
+┃  ║       │               <0.6 / anomaly → REVIEW QUEUE + reasons   ║   ┃
+┃  ║                                                                   ║   ┃
+┃  ╚═══════════════════════════════════════════════════════════════════╝   ┃
+┃                                                                         ┃
+┃          ┌────────── lookups.py ──────────┐                             ┃
+┃          │  APPROVED_UOM map              │                             ┃
+┃          │  1/64 fraction table           │                             ┃
+┃          │  Brand master                  │                             ┃
+┃          │  DISTRIBUTOR_SIGNAL_WORDS      │                             ┃
+┃          │  MPN-prefix hints              │                             ┃
+┃          │  Placeholder set               │                             ┃
+┃          └────────────────────────────────┘                             ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ```
 
 - **Zero-dependency:** stdlib `urllib` calls the Claude Messages API; **no `pip install`**.

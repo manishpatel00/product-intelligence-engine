@@ -195,7 +195,6 @@ python3 tests/test_server_core.py      # live-demo request core (render + enrich
 
 - **Solution overview (≤2056 chars):** [`docs/SOLUTION_OVERVIEW.txt`](docs/SOLUTION_OVERVIEW.txt)
 - **Slide-by-slide deck content:** [`docs/DECK_CONTENT.md`](docs/DECK_CONTENT.md)
-- **Demo video script (3–4 min):** [`docs/VIDEO_SCRIPT.md`](docs/VIDEO_SCRIPT.md)
 - **Architecture deep-dive:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## License
