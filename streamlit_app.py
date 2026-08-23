@@ -109,27 +109,27 @@ header[data-testid="stHeader"] {
 }
 
 /* Keep sidebar toggle visible, style it to match */
+button[kind="header"],
 button[data-testid="stSidebarCollapseButton"],
-button[data-testid="collapsedControl"] {
-    color: var(--ink) !important;
-}
-
-/* Collapsed sidebar arrow/hamburger button — always visible */
+button[data-testid="collapsedControl"],
 div[data-testid="stSidebarCollapsedControl"] {
     color: var(--ink) !important;
-    background: var(--canvas) !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
-    border-radius: var(--rounded-pill) !important;
-    padding: var(--sp-xs) !important;
-    margin: var(--sp-md) !important;
+    background-color: var(--canvas-card) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: var(--rounded-sm) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     z-index: 999999 !important;
-    box-shadow: none !important;
 }
 
 /* Sidebar toggle icon */
+button[kind="header"] svg,
+button[data-testid="stSidebarCollapseButton"] svg,
+button[data-testid="collapsedControl"] svg,
 div[data-testid="stSidebarCollapsedControl"] svg {
     fill: var(--ink) !important;
     color: var(--ink) !important;
+    stroke: var(--ink) !important;
 }
 
 .stApp {
