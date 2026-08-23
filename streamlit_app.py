@@ -2,9 +2,8 @@
 """
 Unilog Product Intelligence Engine — Streamlit Cloud demo
 ==========================================================
-Drop-in Streamlit frontend for the same 9-stage enrichment pipeline.
-Deploy: share.streamlit.io → repo: manishpatel00/product-intelligence-engine
-         branch: main → Main file path: streamlit_app.py
+xAI-inspired design system: near-black canvas, Inter weight 400,
+Geist Mono uppercase eyebrows, pill outlines, hairline borders.
 """
 import csv
 import json
@@ -13,13 +12,12 @@ import sys
 
 import streamlit as st
 
-# Ensure src/ is importable
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.pipeline import process_row
 from src import llm_client
 
 # ---------------------------------------------------------------------------
-# Page config & theme
+# Page config
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="Unilog Product Intelligence Engine",
@@ -28,242 +26,568 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for premium dark look
+# ---------------------------------------------------------------------------
+# xAI-inspired design system CSS
+# ---------------------------------------------------------------------------
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* ═══════════════════════════════════════════════════════════════
+   FONTS — Inter (display/body substitute for Universal Sans)
+          + Geist Mono (uppercase eyebrows, labels, counters)
+   ═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+    /* Surface */
+    --canvas:       #0a0a0a;
+    --canvas-soft:  #1a1c20;
+    --canvas-card:  #191919;
+    --canvas-mid:   #363a3f;
+    --hairline:     #212327;
+
+    /* Text */
+    --ink:          #ffffff;
+    --body:         #dadbdf;
+    --body-mid:     #7d8187;
+
+    /* Accent (used sparingly) */
+    --accent-sunset:      #ff7a17;
+    --accent-sunset-soft: #ffc285;
+    --accent-dusk:        #7c3aed;
+    --accent-twilight:    #c4b5fd;
+    --accent-breeze:      #a0c3ec;
+
+    /* Semantic */
+    --good:  #37d39b;
+    --warn:  #ffb454;
+    --bad:   #ff6b6b;
+
+    /* Shape */
+    --rounded-sm:   8px;
+    --rounded-pill: 9999px;
+
+    /* Spacing */
+    --sp-xs:  4px;
+    --sp-sm:  8px;
+    --sp-md:  12px;
+    --sp-lg:  16px;
+    --sp-xl:  24px;
+    --sp-2xl: 32px;
+    --sp-3xl: 48px;
+    --sp-4xl: 64px;
 }
 
-/* Hide Streamlit branding */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL RESET
+   ═══════════════════════════════════════════════════════════════ */
+html, body, [class*="css"], .stApp,
+div[data-testid="stAppViewContainer"],
+div[data-testid="stHeader"],
+div[data-testid="stToolbar"],
+div[data-testid="stDecoration"] {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 400 !important;
+}
+
+/* Kill Streamlit chrome */
+#MainMenu, footer, header,
+div[data-testid="stToolbar"],
+div[data-testid="stDecoration"],
+div[data-testid="stStatusWidget"] {
+    display: none !important;
+}
 
 .stApp {
-    background: linear-gradient(135deg, #0b0f17 0%, #111826 50%, #0d1220 100%);
+    background: var(--canvas) !important;
 }
 
-/* Sidebar */
+/* Main container */
+.stMainBlockContainer,
+div[data-testid="stAppViewBlockContainer"] {
+    max-width: 1200px;
+    padding-top: var(--sp-3xl) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════════════════════════ */
 section[data-testid="stSidebar"] {
-    background: #141b28;
-    border-right: 1px solid #26324a;
+    background: var(--canvas) !important;
+    border-right: 1px solid var(--hairline) !important;
 }
 
+section[data-testid="stSidebar"] > div {
+    padding-top: var(--sp-3xl) !important;
+}
+
+/* Sidebar labels — Geist Mono uppercase */
 section[data-testid="stSidebar"] .stSelectbox label,
 section[data-testid="stSidebar"] .stTextInput label,
-section[data-testid="stSidebar"] .stTextArea label {
-    color: #8ea0bd !important;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+section[data-testid="stSidebar"] .stTextArea label,
+section[data-testid="stSidebar"] label {
+    font-family: 'JetBrains Mono', 'Geist Mono', monospace !important;
+    font-weight: 400 !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.4px !important;
+    color: var(--body-mid) !important;
 }
 
-/* Metric cards */
+/* Sidebar inputs */
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] textarea,
+section[data-testid="stSidebar"] select,
+section[data-testid="stSidebar"] div[data-baseweb="select"] {
+    background: var(--canvas-soft) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--rounded-sm) !important;
+    color: var(--ink) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+}
+
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background: var(--canvas-soft) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--rounded-sm) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BUTTONS — pill outline, translucent white border
+   ═══════════════════════════════════════════════════════════════ */
+.stButton > button {
+    background: transparent !important;
+    color: var(--ink) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: var(--rounded-pill) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    padding: var(--sp-xs) var(--sp-md) !important;
+    letter-spacing: 0 !important;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.stButton > button:hover {
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--ink) !important;
+}
+
+/* Primary CTA — the rare filled pill */
+.stButton > button[kind="primary"],
+section[data-testid="stSidebar"] .stButton > button {
+    background: var(--ink) !important;
+    color: var(--canvas) !important;
+    border: 1px solid var(--ink) !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: #fafaf7 !important;
+}
+
+/* Download buttons */
+.stDownloadButton > button {
+    background: transparent !important;
+    color: var(--ink) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: var(--rounded-pill) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+}
+
+.stDownloadButton > button:hover {
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPANDER
+   ═══════════════════════════════════════════════════════════════ */
+div[data-testid="stExpander"] {
+    background: var(--canvas-card) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--rounded-sm) !important;
+}
+
+div[data-testid="stExpander"] summary span {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 400 !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.4px !important;
+    color: var(--body-mid) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   METRICS — override Streamlit defaults
+   ═══════════════════════════════════════════════════════════════ */
 div[data-testid="stMetric"] {
-    background: #141b28;
-    border: 1px solid #26324a;
-    border-radius: 12px;
-    padding: 16px;
+    background: var(--canvas-card) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--rounded-sm) !important;
+    padding: var(--sp-xl) !important;
 }
 
-/* Custom card style */
-.card {
-    background: #141b28;
-    border: 1px solid #26324a;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
+div[data-testid="stMetric"] label {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 400 !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.4px !important;
+    color: var(--body-mid) !important;
 }
 
-.card-title {
+div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400 !important;
+    letter-spacing: -1.2px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SPINNER
+   ═══════════════════════════════════════════════════════════════ */
+.stSpinner > div {
+    border-top-color: var(--ink) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WARNING / INFO
+   ═══════════════════════════════════════════════════════════════ */
+div[data-testid="stAlert"] {
+    background: var(--canvas-card) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--rounded-sm) !important;
+    color: var(--body) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM COMPONENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Eyebrow — Geist Mono uppercase tracked */
+.eyebrow {
+    font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+    font-weight: 400;
     font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #8ea0bd;
-    margin-bottom: 12px;
-    font-weight: 600;
+    letter-spacing: 1.4px;
+    color: var(--body-mid);
+    margin-bottom: var(--sp-sm);
 }
 
-/* Description blocks */
-.desc-block {
-    border-left: 3px solid #4da3ff;
-    padding: 10px 14px;
-    margin: 8px 0;
-    background: #1b2434;
-    border-radius: 0 8px 8px 0;
+/* Display headline — Inter 400, negative tracking */
+.display-xl {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 48px;
+    letter-spacing: -1.2px;
+    color: var(--ink);
+    margin: 0 0 var(--sp-lg) 0;
 }
 
-.desc-label {
+.display-md {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 36px;
+    letter-spacing: -0.6px;
+    color: var(--ink);
+    margin: 0 0 var(--sp-md) 0;
+}
+
+.display-sm {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 28px;
+    letter-spacing: 0;
+    color: var(--ink);
+    margin: 0;
+}
+
+/* Body text */
+.body-lg {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 28px;
+    color: var(--body);
+}
+
+.body-md {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--body);
+}
+
+.body-sm {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--body);
+}
+
+.body-mute {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--body-mid);
+}
+
+/* Card — canvas-card fill, hairline border, 8px radius */
+.xcard {
+    background: var(--canvas-card);
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-sm);
+    padding: var(--sp-xl);
+    margin-bottom: var(--sp-lg);
+}
+
+/* Divider */
+.divider {
+    border: none;
+    border-top: 1px solid var(--hairline);
+    margin: var(--sp-2xl) 0;
+}
+
+/* Description block — accent left border */
+.xdesc {
+    border-left: 2px solid rgba(255, 255, 255, 0.15);
+    padding: var(--sp-md) var(--sp-lg);
+    margin: var(--sp-sm) 0;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0 var(--rounded-sm) var(--rounded-sm) 0;
+}
+
+.xdesc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
     font-size: 11px;
-    color: #8ea0bd;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.2px;
+    color: var(--body-mid);
     margin-bottom: 4px;
 }
 
-.desc-value {
-    font-size: 14px;
-    color: #e7edf7;
+.xdesc-value {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--ink);
 }
 
-.desc-meta {
+.xdesc-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
     font-size: 11px;
-    color: #8ea0bd;
+    color: var(--body-mid);
     margin-top: 4px;
 }
 
 /* Flag / review reason */
-.flag {
-    background: #2a1414;
-    border: 1px solid #5c2626;
+.xflag {
+    background: rgba(255, 107, 107, 0.08);
+    border: 1px solid rgba(255, 107, 107, 0.2);
     color: #ffc2c2;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin: 6px 0;
+    border-radius: var(--rounded-sm);
+    padding: var(--sp-md) var(--sp-lg);
+    margin: var(--sp-sm) 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
     font-size: 13px;
+    line-height: 20px;
 }
 
-.ok-badge {
-    color: #37d39b;
-    font-weight: 600;
+.xok {
+    color: var(--good);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
 }
 
-/* Confidence gauge */
-.gauge-bg {
-    height: 10px;
-    border-radius: 6px;
-    background: #26324a;
-    overflow: hidden;
-    margin-top: 4px;
-}
-
-.gauge-fill {
-    height: 100%;
-    border-radius: 6px;
-}
-
-/* Pill / badge */
-.pill {
+/* Pill badge */
+.xpill {
     display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
     font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #12324a;
-    color: #8fd0ff;
+    padding: 2px 10px;
+    border-radius: var(--rounded-pill);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--body);
+    letter-spacing: 0.5px;
 }
 
-.badge-on {
-    font-size: 12px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    border: 1px solid #1f5c48;
-    background: #0f2a22;
-    color: #37d39b;
+.xpill-on {
+    border-color: rgba(55, 211, 155, 0.3);
+    color: var(--good);
 }
 
-.badge-off {
-    font-size: 12px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    border: 1px solid #5c4a1f;
-    background: #2a220f;
-    color: #ffb454;
+.xpill-off {
+    border-color: rgba(255, 180, 84, 0.3);
+    color: var(--warn);
+}
+
+/* Gauge */
+.xgauge-bg {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--hairline);
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.xgauge-fill {
+    height: 100%;
+    border-radius: 3px;
 }
 
 /* KV grid */
-.kv-grid {
+.xkv {
     display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 6px 14px;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 16px;
 }
 
-.kv-key {
-    color: #8ea0bd;
-    font-size: 13px;
-}
-
-.kv-val {
-    color: #e7edf7;
-    font-size: 13px;
-}
-
-/* Header */
-.engine-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 6px 0 18px 0;
-    border-bottom: 1px solid #26324a;
-    margin-bottom: 24px;
-}
-
-.engine-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #e7edf7;
-    letter-spacing: 0.2px;
-}
-
-.engine-subtitle {
-    color: #8ea0bd;
+.xkv-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
     font-size: 12px;
-    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--body-mid);
 }
 
-/* Table styling */
-.attr-table {
+.xkv-val {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+/* Table */
+.xtable {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
 }
 
-.attr-table th {
+.xtable th {
     text-align: left;
-    padding: 8px;
-    border-bottom: 1px solid #26324a;
-    color: #8ea0bd;
-    font-weight: 500;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--hairline);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
     font-size: 11px;
     text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--body-mid);
 }
 
-.attr-table td {
+.xtable td {
     text-align: left;
-    padding: 8px;
-    border-bottom: 1px solid #1b2434;
-    color: #e7edf7;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--hairline);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--ink);
 }
 
-/* Streamlit overrides */
-.stButton > button {
-    background: linear-gradient(135deg, #4da3ff, #357abd) !important;
-    color: #04121f !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    font-size: 15px !important;
-    padding: 12px 24px !important;
-    width: 100% !important;
+/* 252-col grid */
+.x252 {
+    columns: 2;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
 }
 
-.stButton > button:hover {
-    background: linear-gradient(135deg, #6bb5ff, #4da3ff) !important;
+.x252 div {
+    break-inside: avoid;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--ink);
 }
 
-div[data-testid="stExpander"] {
-    background: #141b28;
-    border: 1px solid #26324a;
-    border-radius: 12px;
+.x252 .xc {
+    color: var(--body-mid);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
+/* Confidence big number */
+.xconf-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 48px;
+    letter-spacing: -1.2px;
+}
+
+/* Hero header */
+.xhero {
+    padding: 0 0 var(--sp-3xl) 0;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: var(--sp-2xl);
+}
+
+.xhero-sub {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--body-mid);
+    margin-top: var(--sp-sm);
+}
+
+/* Pipeline step */
+.xstep {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-md);
+    padding: var(--sp-sm) 0;
+}
+
+.xstep-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--body-mid);
+    min-width: 20px;
+}
+
+.xstep-ai { color: var(--accent-breeze); }
+.xstep-det { color: var(--good); }
+
+.xstep-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--body);
+}
+
+.xstep-text span {
+    color: var(--ink);
 }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
-# Load preset sample rows
+# Presets
 # ---------------------------------------------------------------------------
 @st.cache_data
 def load_presets():
@@ -290,23 +614,23 @@ PRESETS = load_presets()
 
 
 # ---------------------------------------------------------------------------
-# Helper renderers
+# Helpers
 # ---------------------------------------------------------------------------
 def gauge_color(v):
     if v >= 0.75:
-        return "#37d39b"
+        return "var(--good)"
     elif v >= 0.5:
-        return "#ffb454"
-    return "#ff6b6b"
+        return "var(--warn)"
+    return "var(--bad)"
 
 
 def render_desc(label, value, meta=None):
-    val_display = value if value else '<span style="color:#8ea0bd">(empty)</span>'
-    meta_html = f'<div class="desc-meta">{meta}</div>' if meta else ""
+    val = value if value else '<span style="color:var(--body-mid)">—</span>'
+    meta_html = f'<div class="xdesc-meta">{meta}</div>' if meta else ""
     return f"""
-    <div class="desc-block">
-        <div class="desc-label">{label}</div>
-        <div class="desc-value">{val_display}</div>
+    <div class="xdesc">
+        <div class="xdesc-label">{label}</div>
+        <div class="xdesc-value">{val}</div>
         {meta_html}
     </div>
     """
@@ -316,37 +640,40 @@ def render_desc(label, value, meta=None):
 # Header
 # ---------------------------------------------------------------------------
 ai_on = llm_client.have_api_key()
-badge_class = "badge-on" if ai_on else "badge-off"
-badge_text = ("● Claude AI: " + llm_client.DEFAULT_MODEL) if ai_on else "● Deterministic fallback"
+pill_class = "xpill xpill-on" if ai_on else "xpill xpill-off"
+pill_text = f"Claude AI · {llm_client.DEFAULT_MODEL}" if ai_on else "Deterministic fallback"
 
 st.markdown(f"""
-<div class="engine-header">
-    <span style="font-size:28px">⚙️</span>
-    <span class="engine-title">Unilog Product Intelligence Engine</span>
-    <span class="{badge_class}">{badge_text}</span>
-    <span class="engine-subtitle">messy row → 252-column commerce record · confidence-scored · human-in-the-loop</span>
+<div class="xhero">
+    <div class="eyebrow">Unilog Product Intelligence Engine</div>
+    <div class="display-xl">messy row → 252 columns</div>
+    <div class="xhero-sub">
+        Turn one cryptic distributor row into a complete, standardised, search-ready commerce record.
+        AI reasons — deterministic rules enforce the spec.
+    </div>
+    <div style="margin-top: var(--sp-lg)">
+        <span class="{pill_class}">{pill_text}</span>
+        <span class="xpill" style="margin-left:8px">Team Codehunt</span>
+        <span class="xpill" style="margin-left:8px">UniHack 2026</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
-# Sidebar — input form
+# Sidebar
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 📋 Input Row")
+    st.markdown('<div class="eyebrow" style="margin-bottom:var(--sp-xl)">Input row</div>', unsafe_allow_html=True)
 
     preset_options = ["— choose —"] + [
         f"{(p.get('Mfg_Part_Num') or 'row')[:18]} — {(p.get('Part_Desc') or '')[:34]}"
         for p in PRESETS
     ]
-    preset_idx = st.selectbox("Load a sample row", options=range(len(preset_options)),
+    preset_idx = st.selectbox("Sample row", options=range(len(preset_options)),
                               format_func=lambda i: preset_options[i], key="preset")
 
-    # Pre-fill from preset
-    default_mpn = ""
-    default_desc = ""
-    default_manuf = ""
-    default_brands = ""
+    default_mpn = default_desc = default_manuf = default_brands = ""
     if preset_idx and preset_idx > 0:
         p = PRESETS[preset_idx - 1]
         default_mpn = p.get("Mfg_Part_Num", "")
@@ -356,27 +683,28 @@ with st.sidebar:
             p.get("E1_Brand", ""), p.get("Unilog_Brand", ""), p.get("DIB_Brand", "")
         ]))
 
-    mpn = st.text_input("Mfg_Part_Num (MPN)", value=default_mpn, placeholder="e.g. PDSH4816AF")
-    desc = st.text_area("Part_Desc (cryptic description)", value=default_desc,
-                        placeholder="e.g. PDSH4816AF Dishwasher SS - Display Only")
-    manuf = st.text_input("Part_Manuf", value=default_manuf,
-                          placeholder="e.g. Appliance Dealers Cooperative (APPDE)")
-    brands = st.text_input("E1_Brand / Unilog_Brand / DIB_Brand", value=default_brands,
-                           placeholder="often -- Unbranded -- (auto-filtered)")
+    mpn = st.text_input("MPN", value=default_mpn, placeholder="e.g. PDSH4816AF")
+    desc = st.text_area("Part description", value=default_desc,
+                        placeholder="e.g. PDSH4816AF Dishwasher SS - Display Only", height=80)
+    manuf = st.text_input("Manufacturer", value=default_manuf,
+                          placeholder="e.g. Appliance Dealers Cooperative")
+    brands = st.text_input("Brand fields", value=default_brands,
+                           placeholder="often -- Unbranded --")
 
-    enrich_btn = st.button("⚡ Enrich →", use_container_width=True)
+    enrich_btn = st.button("Enrich →", use_container_width=True)
 
     st.markdown("""
-    <div style="font-size:12px; color:#8ea0bd; margin-top:12px; line-height:1.6">
-        Runs the real 9-stage pipeline. With an API key set, Claude classifies &amp; extracts;
-        a deterministic gate then enforces UOM/fraction/char-limit rules and flags
-        low-confidence fields.
+    <hr class="divider">
+    <div class="body-mute" style="font-size:12px; line-height:1.7">
+        Runs the real 9-stage pipeline. Claude classifies &amp; extracts;
+        a deterministic gate enforces UOM / fraction / char-limit rules.
+        No API key → deterministic fallback, same contract.
     </div>
     """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
-# Main content — enrich and display
+# Main
 # ---------------------------------------------------------------------------
 if enrich_btn and desc.strip():
     brand_parts = [b.strip() for b in (brands or "").split("|")]
@@ -389,46 +717,55 @@ if enrich_btn and desc.strip():
         "DIB_Brand": brand_parts[2] if len(brand_parts) > 2 else "",
     }
 
-    with st.spinner("Running 9-stage enrichment pipeline…"):
+    with st.spinner("Running 9-stage pipeline…"):
         rec, qa = process_row(row)
 
-    # --- Identity & Taxonomy ---
-    st.markdown('<div class="card"><div class="card-title">Identity & Taxonomy</div>', unsafe_allow_html=True)
+    # ── Identity & Taxonomy ──────────────────────────────────
+    st.markdown("""
+    <div class="xcard">
+        <div class="eyebrow">Identity & Taxonomy</div>
+    """, unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
     with col1:
         st.markdown(f"""
-        <div class="kv-grid">
-            <div class="kv-key">Brand</div><div class="kv-val"><b>{rec.get('BRAND_NAME') or '—'}</b></div>
-            <div class="kv-key">Manufacturer</div><div class="kv-val">{rec.get('MANUFACTURER_NAME') or '<span style="color:#8ea0bd">(withheld/flagged)</span>'}</div>
-            <div class="kv-key">MPN</div><div class="kv-val">{rec.get('MANUFACTURER_PART_NUMBER') or '—'}</div>
-            <div class="kv-key">Product</div><div class="kv-val">{rec.get('Product Name') or '—'}</div>
+        <div class="xkv">
+            <div class="xkv-key">Brand</div>
+            <div class="xkv-val">{rec.get('BRAND_NAME') or '—'}</div>
+            <div class="xkv-key">Manufacturer</div>
+            <div class="xkv-val">{rec.get('MANUFACTURER_NAME') or '<span style="color:var(--body-mid)">withheld / flagged</span>'}</div>
+            <div class="xkv-key">MPN</div>
+            <div class="xkv-val">{rec.get('MANUFACTURER_PART_NUMBER') or '—'}</div>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
-        <div class="kv-grid">
-            <div class="kv-key">Classpath</div><div class="kv-val">{rec.get('Classpath') or '—'}</div>
-            <div class="kv-key">Dept / Class / Fine</div><div class="kv-val">{' › '.join(filter(None, [rec.get('Dept'), rec.get('Class'), rec.get('Fine')])) or '—'}</div>
-            <div class="kv-key">MFR URL</div><div class="kv-val">{rec.get('MFR URL') or '—'}</div>
+        <div class="xkv">
+            <div class="xkv-key">Classpath</div>
+            <div class="xkv-val">{rec.get('Classpath') or '—'}</div>
+            <div class="xkv-key">Dept / Class</div>
+            <div class="xkv-val">{' › '.join(filter(None, [rec.get('Dept'), rec.get('Class'), rec.get('Fine')])) or '—'}</div>
+            <div class="xkv-key">Product</div>
+            <div class="xkv-val">{rec.get('Product Name') or '—'}</div>
         </div>
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Five Descriptions ---
-    st.markdown('<div class="card"><div class="card-title">The Same Product, Five Formats</div>', unsafe_allow_html=True)
+    # ── Descriptions ────────────────────────────────────────
     inv = rec.get("INVOICE_DESC", "")
     mob = rec.get("MOBILE_DESC", "")
-    html_descs = ""
-    html_descs += render_desc("Invoice Desc (≤40, CAPS)", inv, f"len {len(inv)}/40" if inv else None)
-    html_descs += render_desc("Mobile Desc (60–80)", mob, f"len {len(mob)}" if mob else None)
-    html_descs += render_desc("Short Desc / Product Title", rec.get("SHORT_DESC", ""))
-    html_descs += render_desc("Long Description", rec.get("LONG_DESC1", ""))
-    html_descs += render_desc("Marketing Description", rec.get("MARKETING_DESCRIPTION", ""))
-    st.markdown(html_descs, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="xcard">
+        <div class="eyebrow">The same product, five formats</div>
+        {render_desc("Invoice desc · ≤40 caps", inv, f"{len(inv)}/40 chars" if inv else None)}
+        {render_desc("Mobile desc · 60–80", mob, f"{len(mob)} chars" if mob else None)}
+        {render_desc("Short desc", rec.get("SHORT_DESC", ""))}
+        {render_desc("Long description", rec.get("LONG_DESC1", ""))}
+        {render_desc("Marketing", rec.get("MARKETING_DESCRIPTION", ""))}
+    </div>
+    """, unsafe_allow_html=True)
 
-    # --- Attributes ---
-    st.markdown('<div class="card"><div class="card-title">Attributes (Normalised · Approved UOM)</div>', unsafe_allow_html=True)
+    # ── Attributes ──────────────────────────────────────────
     attr_rows = []
     for i in range(1, 51):
         label = rec.get(f"ATTRIBUTE_LABEL {i}", "")
@@ -438,120 +775,175 @@ if enrich_btn and desc.strip():
         uom = rec.get(f"ATTRIBUTE_UOM {i}", "")
         attr_rows.append((label, value, uom))
 
+    table_html = ""
     if attr_rows:
-        table_html = '<table class="attr-table"><tr><th>Label</th><th>Value</th><th>UOM</th></tr>'
+        table_html = '<table class="xtable"><tr><th>Label</th><th>Value</th><th>UOM</th></tr>'
         for label, value, uom in attr_rows:
-            uom_pill = f'<span class="pill">{uom}</span>' if uom else '<span style="color:#8ea0bd">—</span>'
-            table_html += f'<tr><td>{label}</td><td><b>{value}</b></td><td>{uom_pill}</td></tr>'
+            uom_html = f'<span class="xpill">{uom}</span>' if uom else '<span style="color:var(--body-mid)">—</span>'
+            table_html += f'<tr><td>{label}</td><td>{value}</td><td>{uom_html}</td></tr>'
         table_html += '</table>'
-        st.markdown(table_html, unsafe_allow_html=True)
     else:
-        st.markdown('<span style="color:#8ea0bd">No attributes extracted</span>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- Confidence & Review Queue ---
-    st.markdown('<div class="card"><div class="card-title">Confidence & Review Queue</div>', unsafe_allow_html=True)
-
-    overall = qa.get("overall_confidence", 0)
-    needs_review = qa.get("needs_human_review", False)
-    overall_color = gauge_color(overall)
-
-    review_label = '⚑ Routed to human review' if needs_review else '✓ Auto-shippable'
-    review_color = '#ffb454' if needs_review else '#37d39b'
-    engine_label = 'Claude AI + rule gate' if qa.get("ai_used") else 'deterministic fallback'
+        table_html = '<div class="body-mute">No attributes extracted</div>'
 
     st.markdown(f"""
-    <div style="display:flex; gap:20px; align-items:center; margin-bottom:16px">
-        <div style="font-size:38px; font-weight:800; color:{overall_color}">{overall}</div>
-        <div>
-            <div style="color:{review_color}; font-weight:600">{review_label}</div>
-            <div style="font-size:12px; color:#8ea0bd">engine: {engine_label} · {qa.get('n_attributes', 0)} attributes</div>
-        </div>
+    <div class="xcard">
+        <div class="eyebrow">Attributes · normalised · approved UOM</div>
+        {table_html}
     </div>
     """, unsafe_allow_html=True)
 
-    # Field confidence bars
+    # ── Confidence & Review ─────────────────────────────────
+    overall = qa.get("overall_confidence", 0)
+    needs_review = qa.get("needs_human_review", False)
+    overall_color = gauge_color(overall)
+    engine_label = "Claude AI + rule gate" if qa.get("ai_used") else "deterministic fallback"
+
+    review_html = ""
+    if needs_review:
+        review_html = '<span style="color:var(--warn)">⚑ Routed to human review</span>'
+    else:
+        review_html = '<span class="xok">✓ Auto-shippable</span>'
+
+    # Field confidence gauges
+    fc_html = ""
     for field, conf in qa.get("field_confidence", {}).items():
         color = gauge_color(conf)
         pct = int(conf * 100)
-        st.markdown(f"""
-        <div style="margin:8px 0">
-            <div style="display:flex; justify-content:space-between; font-size:12px">
-                <span style="color:#8ea0bd">{field}</span>
-                <span style="color:#e7edf7">{conf}</span>
+        fc_html += f"""
+        <div style="margin:10px 0">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+                <span class="xkv-key" style="text-transform:none; letter-spacing:0">{field}</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--body)">{conf}</span>
             </div>
-            <div class="gauge-bg"><div class="gauge-fill" style="width:{pct}%; background:{color}"></div></div>
+            <div class="xgauge-bg"><div class="xgauge-fill" style="width:{pct}%; background:{color}"></div></div>
         </div>
-        """, unsafe_allow_html=True)
+        """
 
     # Review reasons
     reasons = qa.get("review_reasons", [])
+    flags_html = ""
     if reasons:
         for reason in reasons:
-            st.markdown(f'<div class="flag">⚑ {reason}</div>', unsafe_allow_html=True)
+            flags_html += f'<div class="xflag">⚑ {reason}</div>'
     else:
-        st.markdown('<div class="ok-badge">✓ No blocking issues — auto-shippable.</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        flags_html = '<div class="xok" style="margin-top:var(--sp-md)">✓ No blocking issues — auto-shippable.</div>'
 
-    # --- Full 252-column record ---
+    st.markdown(f"""
+    <div class="xcard">
+        <div class="eyebrow">Confidence & review queue</div>
+        <div style="display:flex; gap:24px; align-items:center; margin-bottom:var(--sp-xl)">
+            <div class="xconf-num" style="color:{overall_color}">{overall}</div>
+            <div>
+                <div>{review_html}</div>
+                <div class="body-mute" style="font-size:12px; margin-top:4px">
+                    <span class="xpill" style="font-size:10px">{engine_label}</span>
+                    <span style="margin-left:8px">{qa.get('n_attributes', 0)} attributes</span>
+                </div>
+            </div>
+        </div>
+        {fc_html}
+        <hr class="divider" style="margin:var(--sp-lg) 0">
+        {flags_html}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Full 252-column record ──────────────────────────────
     filled = sum(1 for v in rec.values() if v)
-    with st.expander(f"📄 Full 252-column record · {filled} populated"):
-        # Download buttons
-        col_csv, col_json = st.columns(2)
+    with st.expander(f"Full 252-column record · {filled} populated"):
+        col_csv, col_json, _ = st.columns([1, 1, 2])
         with col_csv:
             csv_data = ",".join(rec.keys()) + "\n" + ",".join(
                 f'"{str(v).replace(chr(34), chr(34)+chr(34))}"' if v else '""' for v in rec.values()
             ) + "\n"
-            st.download_button("⬇ Download CSV", csv_data,
+            st.download_button("⬇ CSV", csv_data,
                                file_name=f"{mpn or 'record'}_enriched.csv",
                                mime="text/csv", use_container_width=True)
         with col_json:
-            st.download_button("⬇ Download JSON", json.dumps(rec, indent=2),
+            st.download_button("⬇ JSON", json.dumps(rec, indent=2),
                                file_name=f"{mpn or 'record'}.json",
                                mime="application/json", use_container_width=True)
 
-        # Show all columns
-        grid_html = '<div style="columns:2; font-size:12px; margin-top:12px">'
+        grid_html = '<div class="x252">'
         for k, v in rec.items():
-            grid_html += f'<div style="break-inside:avoid; padding:2px 0; border-bottom:1px solid #1b2434"><span style="color:#8ea0bd">{k}:</span> {v or ""}</div>'
+            grid_html += f'<div><span class="xc">{k}:</span> {v or ""}</div>'
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
 
 elif enrich_btn and not desc.strip():
-    st.warning("Please enter a Part_Desc to enrich.")
+    st.warning("Enter a Part_Desc to enrich.")
 
 else:
-    # Landing state
+    # ── Landing ─────────────────────────────────────────────
     st.markdown("""
-    <div class="card">
-        <div class="card-title">Output</div>
-        <div style="color:#8ea0bd; line-height:1.7">
-            Pick a sample row from the sidebar or type one, then press <b>⚡ Enrich →</b>.<br>
+    <div class="xcard">
+        <div class="eyebrow">Ready</div>
+        <div class="display-sm" style="margin-bottom:var(--sp-md)">
+            Pick a sample row or type one, then press Enrich →
+        </div>
+        <div class="body-md">
             You'll see the five description formats, resolved identity, normalised attributes,
-            confidence scores and the review queue — all from the real 9-stage pipeline.<br><br>
-            <b>Team Codehunt</b> · UniHack 2026 · Unilog Challenge<br>
-            <em>"AI reasons, deterministic rules enforce the spec — so no invented value ever ships."</em>
+            per-field confidence scores, and the review queue with specific reasons — all from the
+            real 9-stage pipeline running live.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Architecture overview
+    # Pipeline overview
     st.markdown("""
-    <div class="card">
-        <div class="card-title">How It Works — 9-Stage Pipeline</div>
-        <div style="color:#8ea0bd; font-size:13px; line-height:1.8">
-            <b style="color:#4da3ff">① Ingest & Clean</b> → Strip placeholders ("--Unbranded--" → empty)<br>
-            <b style="color:#4da3ff">② De-Duplicate</b> → Collapse repeat SKUs (saves LLM spend)<br>
-            <b style="color:#4da3ff">③ AI Classify</b> → Classpath / Dept / Class / Fine<br>
-            <b style="color:#4da3ff">④ AI Extract Attributes</b> → {label, value, uom} triples<br>
-            <b style="color:#4da3ff">⑤ Enrich</b> → Brand / MPN-prefix / manufacturer signals<br>
-            <b style="color:#37d39b">⑥ Normalize</b> → Approved UOM + space; decimals → fractions (1/64 table)<br>
-            <b style="color:#37d39b">⑦ Build 5 Descriptions</b> → INVOICE (≤40 CAPS), MOBILE, SHORT, LONG, MARKETING<br>
-            <b style="color:#37d39b">⑧ Resolve Assets</b> → URLs / images (flagged if unresolved)<br>
-            <b style="color:#37d39b">⑨ Validation Gate</b> → Per-field confidence → AUTO-SHIP or REVIEW QUEUE<br>
-            <br>
-            <span style="color:#4da3ff">■ Blue = AI proposes</span> &nbsp;&nbsp;
-            <span style="color:#37d39b">■ Green = Deterministic rules enforce</span>
+    <div class="xcard">
+        <div class="eyebrow">9-stage pipeline</div>
+        <div style="margin-top:var(--sp-md)">
+            <div class="xstep">
+                <span class="xstep-num xstep-ai">01</span>
+                <span class="xstep-text"><span>Ingest & Clean</span> — strip placeholders, trim whitespace</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-ai">02</span>
+                <span class="xstep-text"><span>De-Duplicate</span> — collapse repeat SKUs, save LLM spend</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-ai">03</span>
+                <span class="xstep-text"><span>AI Classify</span> — Classpath / Dept / Class / Fine taxonomy</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-ai">04</span>
+                <span class="xstep-text"><span>AI Extract</span> — attribute triples {label, value, uom}</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-ai">05</span>
+                <span class="xstep-text"><span>Enrich</span> — brand / MPN-prefix / manufacturer signals</span>
+            </div>
+            <hr class="divider" style="margin:var(--sp-sm) 0; margin-left:32px">
+            <div class="xstep">
+                <span class="xstep-num xstep-det">06</span>
+                <span class="xstep-text"><span>Normalize</span> — approved UOM + space; decimals → fractions</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-det">07</span>
+                <span class="xstep-text"><span>Build 5 Descriptions</span> — INVOICE ≤40 CAPS, MOBILE, SHORT, LONG, MARKETING</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-det">08</span>
+                <span class="xstep-text"><span>Resolve Assets</span> — URLs / images, flagged if unresolved</span>
+            </div>
+            <div class="xstep">
+                <span class="xstep-num xstep-det">09</span>
+                <span class="xstep-text"><span>Validation Gate</span> — per-field confidence → auto-ship or review queue</span>
+            </div>
+        </div>
+        <div style="margin-top:var(--sp-xl)">
+            <span class="xpill" style="border-color:rgba(160,195,236,0.3); color:var(--accent-breeze)">01–05 AI proposes</span>
+            <span class="xpill" style="margin-left:8px; border-color:rgba(55,211,155,0.3); color:var(--good)">06–09 Deterministic rules enforce</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Principle
+    st.markdown("""
+    <div class="xcard">
+        <div class="eyebrow">Principle</div>
+        <div class="display-sm" style="color:var(--body)">
+            "AI reasons, deterministic rules enforce the spec — so no invented value ever ships."
         </div>
     </div>
     """, unsafe_allow_html=True)
