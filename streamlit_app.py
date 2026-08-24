@@ -12,6 +12,7 @@ import os
 import sys
 import textwrap
 
+
 import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -1646,7 +1647,6 @@ elif not st.session_state.rec:
         </div>
     </div>
     """), unsafe_allow_html=True)
-
     st.markdown(textwrap.dedent("""
     <div class="xcard">
         <div class="eyebrow">How it works</div>
