@@ -1619,7 +1619,7 @@ if st.session_state.rec and st.session_state.qa:
 
 # ── Landing state (no row selected, no enrich) ──────────────────
 elif not st.session_state.rec:
-    st.markdown(textwrap.dedent("""
+    html_str = """
     <div class="xsection-head">
         <div class="eyebrow">Workspace ready</div>
         <div class="body-mute">Pick a sample or type a row, then hit Enrich</div>
@@ -1646,8 +1646,9 @@ elif not st.session_state.rec:
             <div class="xmetric-note">rules enforce the spec</div>
         </div>
     </div>
-    """), unsafe_allow_html=True)
-    st.markdown(textwrap.dedent("""
+    """
+    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
+    html_str = """
     <div class="xcard">
         <div class="eyebrow">How it works</div>
         <div class="display-sm" style="margin-bottom:var(--sp-md); color:var(--body)">
@@ -1659,10 +1660,11 @@ elif not st.session_state.rec:
             Per-field confidence scores. Explicit review reasons. Deterministic rules gate every AI output.
         </div>
     </div>
-    """), unsafe_allow_html=True)
+    """
+    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
 
 # Pipeline overview - Professional component
-    st.markdown(textwrap.dedent("""
+    html_str = """
     <div class="xcard">
         <div class="eyebrow">9-stage pipeline architecture</div>
         <div class="xpipeline" style="margin-top:var(--sp-lg);">
@@ -1763,14 +1765,15 @@ elif not st.session_state.rec:
             </span>
         </div>
     </div>
-    """), unsafe_allow_html=True)
+    """
+    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
 
-    # Principle
-    st.markdown(textwrap.dedent("""
+    html_str = """
     <div class="xcard">
         <div class="eyebrow">Principle</div>
         <div class="display-sm" style="color:var(--body)">
             "AI reasons, deterministic rules enforce the spec - so no invented value ever ships."
         </div>
     </div>
-    """), unsafe_allow_html=True)
+    """
+    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
