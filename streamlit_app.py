@@ -10,10 +10,13 @@ import html
 import json
 import os
 import sys
-import textwrap
-
 
 import streamlit as st
+
+def _flat_html(s):
+    """Strip leading whitespace from every line so Streamlit never
+    treats indented HTML as a Markdown code-block."""
+    return "".join(line.strip() for line in s.splitlines())
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.pipeline import process_row
@@ -58,7 +61,10 @@ st.markdown("""
     --body:         #dadbdf;
     --body-mid:     #7d8187;
 
-    /* Accent (used sparingly) */
+    /* Brand accent — electric green */
+    --primary:            #00d992;
+    --primary-soft:       #2fd6a1;
+    --primary-deep:       #10b981;
     --accent-sunset:      #ff7a17;
     --accent-sunset-soft: #ffc285;
     --accent-dusk:        #7c3aed;
@@ -66,12 +72,13 @@ st.markdown("""
     --accent-breeze:      #a0c3ec;
 
     /* Semantic */
-    --good:  #37d39b;
+    --good:  #00d992;
     --warn:  #ffb454;
     --bad:   #ff6b6b;
 
     /* Shape */
     --rounded-sm:   8px;
+    --rounded-md:   8px;
     --rounded-pill: 9999px;
 
     /* Spacing */
@@ -193,17 +200,20 @@ button[data-testid="collapsedControl"] {
     padding: var(--sp-xs) var(--sp-md) !important;
     width: 100% !important;
     box-sizing: border-box;
+    height: 44px !important;
+    min-height: 44px !important;
 }
 
 .xcontrol-group textarea {
-    min-height: 72px !important;
-    resize: vertical !important;
+    resize: none !important;
 }
 
 .xcontrol-group div[data-baseweb="select"] > div {
     background: var(--canvas-soft) !important;
     border: 1px solid var(--hairline) !important;
     border-radius: var(--rounded-sm) !important;
+    height: 44px !important;
+    min-height: 44px !important;
 }
 
 .xcontrol-actions {
@@ -213,7 +223,7 @@ button[data-testid="collapsedControl"] {
 }
 
 .xcontrol-search {
-    max-width: 320px;
+    max-width: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -943,34 +953,34 @@ div[data-testid="stAlert"] {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--sp-sm);
+    gap: 0;
 }
 
 .pipe-stage {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: var(--sp-md) var(--sp-xl);
+    padding: var(--sp-lg) var(--sp-xl);
     background: var(--canvas-card);
     border: 1px solid var(--hairline);
     border-radius: var(--rounded-sm);
     width: 100%;
     max-width: 720px;
     text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .pipe-stage:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    border-color: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.12);
 }
 
+.pipe-input { border: 1px solid rgba(255, 122, 23, 0.35); }
+.pipe-output { border: 1px solid rgba(0, 217, 146, 0.35); }
 .pipe-input .pipe-icon { color: var(--accent-sunset); }
-.pipe-output .pipe-icon { color: var(--good); }
+.pipe-output .pipe-icon { color: var(--primary); }
 
 .pipe-icon {
-    font-size: 20px;
+    font-size: 22px;
     margin-bottom: var(--sp-xs);
     line-height: 1;
 }
@@ -980,7 +990,7 @@ div[data-testid="stAlert"] {
     font-size: 12px;
     font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
+    letter-spacing: 2px;
     color: var(--ink);
     margin-bottom: var(--sp-xs);
 }
@@ -993,34 +1003,34 @@ div[data-testid="stAlert"] {
 }
 
 .pipe-connector {
-    color: var(--hairline);
-    font-size: 18px;
+    color: var(--body-mid);
+    font-size: 16px;
     line-height: 1;
-    margin: var(--sp-xs) 0;
-    animation: pulse 2s ease-in-out infinite;
+    padding: 6px 0;
+    animation: pulse-connector 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
+@keyframes pulse-connector {
+    0%, 100% { opacity: 0.3; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(2px); }
 }
 
 .pipe-group {
     width: 100%;
     max-width: 720px;
     background: var(--canvas-card);
-    border: 1px solid var(--hairline);
+    border: 1px solid transparent;
     border-radius: var(--rounded-sm);
-    padding: var(--sp-lg) var(--sp-xl);
+    padding: var(--sp-xl);
     position: relative;
 }
 
 .pipe-ai {
-    border-left: 3px solid var(--accent-breeze);
+    border: 1px solid rgba(160, 195, 236, 0.35);
 }
 
 .pipe-det {
-    border-left: 3px solid var(--good);
+    border: 1px solid rgba(0, 217, 146, 0.35);
 }
 
 .pipe-group-header {
@@ -1029,7 +1039,7 @@ div[data-testid="stAlert"] {
     gap: var(--sp-md);
     margin-bottom: var(--sp-lg);
     padding-bottom: var(--sp-md);
-    border-bottom: 1px solid var(--hairline);
+    border-bottom: 1px dashed rgba(79, 93, 117, 0.4);
 }
 
 .pipe-group-badge {
@@ -1037,95 +1047,98 @@ div[data-testid="stAlert"] {
     font-size: 10px;
     font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 2px 8px;
+    letter-spacing: 1.4px;
+    padding: 3px 10px;
     border-radius: var(--rounded-pill);
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.04);
 }
 
 .pipe-ai .pipe-group-badge {
     color: var(--accent-breeze);
     border: 1px solid rgba(160,195,236,0.3);
+    background: rgba(160,195,236,0.06);
 }
 
 .pipe-det .pipe-group-badge {
-    color: var(--good);
-    border: 1px solid rgba(55,211,155,0.3);
+    color: var(--primary);
+    border: 1px solid rgba(0,217,146,0.3);
+    background: rgba(0,217,146,0.06);
 }
 
 .pipe-group-title {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--body-mid);
 }
 
 .pipe-stages {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: stretch;
     gap: var(--sp-sm);
     justify-content: center;
 }
 
 .pipe-step {
-    flex: 1;
-    min-width: 140px;
-    max-width: 180px;
+    flex: 1 1 0;
+    min-width: 0;
     background: var(--canvas-soft);
     border: 1px solid var(--hairline);
     border-radius: var(--rounded-sm);
-    padding: var(--sp-md);
+    padding: var(--sp-md) var(--sp-sm);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
     position: relative;
 }
 
 .pipe-step:hover {
     border-color: rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.02);
+    background: rgba(255,255,255,0.03);
+    transform: translateY(-1px);
 }
 
-.pipe-ai .pipe-step { border-top: 2px solid var(--accent-breeze); }
-.pipe-det .pipe-step { border-top: 2px solid var(--good); }
+.pipe-ai .pipe-step { border: 1px solid rgba(160, 195, 236, 0.3); }
+.pipe-det .pipe-step { border: 1px solid rgba(0, 217, 146, 0.3); }
 
 .pipe-step-num {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     font-weight: 400;
     color: var(--body-mid);
-    margin-bottom: var(--sp-xs);
+    margin-bottom: 2px;
 }
 
 .pipe-ai .pipe-step-num { color: var(--accent-breeze); }
-.pipe-det .pipe-step-num { color: var(--good); }
+.pipe-det .pipe-step-num { color: var(--primary); }
 
 .pipe-step-name {
     font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 400;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--ink);
-    margin-bottom: var(--sp-xs);
+    margin-bottom: 4px;
     line-height: 1.3;
 }
 
 .pipe-step-desc {
     font-family: 'Inter', sans-serif;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--body-mid);
-    line-height: 1.4;
+    line-height: 1.45;
 }
 
 .pipe-arrow {
-    color: var(--hairline);
-    font-size: 18px;
+    color: var(--body-mid);
+    font-size: 14px;
     line-height: 1;
     display: flex;
     align-items: center;
     height: 100%;
-    min-height: 80px;
+    min-height: 60px;
+    opacity: 0.5;
 }
 
 .pipe-legend {
@@ -1141,6 +1154,15 @@ div[data-testid="stAlert"] {
     .pipe-step {
         max-width: none;
         min-width: 0;
+        flex-direction: row;
+        text-align: left;
+        align-items: center;
+        gap: var(--sp-md);
+        padding: var(--sp-md);
+    }
+
+    .pipe-step-num {
+        min-width: 24px;
     }
 
     .pipe-arrow {
@@ -1148,13 +1170,14 @@ div[data-testid="stAlert"] {
     }
 
     .pipe-step::after {
-        content: "→";
+        content: "\2193";
         position: absolute;
-        right: var(--sp-md);
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--hairline);
-        font-size: 16px;
+        bottom: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--body-mid);
+        font-size: 12px;
+        opacity: 0.4;
     }
 
     .pipe-step:last-child::after {
@@ -1164,7 +1187,7 @@ div[data-testid="stAlert"] {
 
 @media (max-width: 420px) {
     .pipe-stage {
-        padding: var(--sp-md) var(--sp-md);
+        padding: var(--sp-md);
     }
 
     .pipe-group {
@@ -1276,36 +1299,42 @@ if "qa" not in st.session_state:
 # Header / Hero
 # ---------------------------------------------------------------------------
 ai_on = llm_client.have_api_key()
-pill_class = "xpill xpill-on" if ai_on else "xpill xpill-off"
 pill_text = f"Claude AI · {llm_client.DEFAULT_MODEL}" if ai_on else "Deterministic fallback"
 
 st.markdown(f"""
-<div class="xutility">
-    <div class="xbrand">
-        <span class="xbrand-mark">U</span>
-        <span>Unilog / Product Intelligence</span>
+<div class="xutility" style="border-bottom: 1px solid var(--hairline); padding-bottom: var(--sp-md); margin-bottom: var(--sp-xl); display: flex; justify-content: space-between; align-items: center;">
+    <div style="font-family: 'JetBrains Mono', 'Geist Mono', monospace; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink);">
+        UNILOG / PRODUCT INTELLIGENCE
     </div>
-    <div class="xutility-meta">Delivery format · 252 fields · 9-stage pipeline</div>
+    <div style="font-family: 'JetBrains Mono', 'Geist Mono', monospace; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--body-mid);">
+        UNIHACK 2026 · TEAM CODEHUNT
+    </div>
 </div>
-<div class="xhero">
+<div class="xhero" style="border-bottom: 1px solid var(--hairline); padding-bottom: var(--sp-xl); margin-bottom: var(--sp-xl);">
     <div class="xhero-row">
         <div>
-            <div class="eyebrow">Product Intelligence Engine</div>
-            <div class="display-xl">Messy distributor rows → clean commerce records</div>
-            <div class="xhero-sub">
-                Drop in a cryptic SKU line. Get back a complete, search-ready product record -
-                classified, attributed, described in five formats, and validated against 252 standard fields.
-                AI proposes. Deterministic rules enforce. Nothing invented ships.
+            <div class="eyebrow" style="font-family: 'JetBrains Mono', 'Geist Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--body-mid); margin-bottom: 8px;">PRODUCT INTELLIGENCE ENGINE</div>
+            <div class="display-xl" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 48px; line-height: 52px; letter-spacing: -1px; color: var(--ink); margin-bottom: 12px;">Raw SKU → Validated Product Record</div>
+            <div class="xhero-sub" style="font-family: 'Inter', sans-serif; font-size: 15px; line-height: 22px; color: var(--body); max-width: 680px; margin-bottom: 16px;">
+                Transform incomplete distributor data into a standardized 252-field Unilog record — with AI reasoning and deterministic validation.
+            </div>
+            <div style="font-family: 'JetBrains Mono', 'Geist Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: var(--body-mid); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span>6 INPUT FIELDS</span>
+                <span style="color: var(--accent-sunset);">→</span>
+                <span>AI PROPOSES</span>
+                <span style="color: var(--primary);">→</span>
+                <span>RULES ENFORCE</span>
+                <span style="color: var(--primary);">→</span>
+                <span>252 OUTPUT FIELDS</span>
             </div>
         </div>
-        <div class="xhero-status">
-            <div class="eyebrow">Engine status</div>
-            <div class="xhero-status-value">{pill_text}</div>
-        </div>
-    </div>
-    <div style="margin-top: var(--sp-lg)">
-        <span class="xpill" style="margin-left:8px">Team Codehunt</span>
-        <span class="xpill" style="margin-left:8px">UniHack 2026</span>
+        <div class="xhero-status" style="border: 1px solid var(--hairline); padding: var(--sp-md) var(--sp-lg); border-radius: var(--rounded-sm); background: var(--canvas-card); min-width: 240px;">
+            <div class="eyebrow" style="font-family: 'JetBrains Mono', 'Geist Mono', monospace; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--body-mid); margin-bottom: 6px;">ENGINE STATUS</div>
+            <div style="font-family: 'JetBrains Mono', 'Geist Mono', monospace; font-size: 12px; font-weight: 400; color: var(--ink); text-transform: uppercase; margin-bottom: 8px;">{pill_text.upper()}</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span class="xpill" style="font-size: 9px; border-color: rgba(0, 217, 146, 0.35); color: var(--primary); padding: 1px 6px; border-radius: var(--rounded-pill);">AI PATH READY</span>
+                <span class="xpill" style="font-size: 9px; border-color: rgba(0, 217, 146, 0.35); color: var(--primary); padding: 1px 6px; border-radius: var(--rounded-pill);">VALIDATION ACTIVE</span>
+            </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1332,7 +1361,7 @@ preset_options = ["- choose a sample row -"] + [
 
 # Build the control bar using columns
 col_search, col_preset, col_mpn, col_desc, col_manuf, col_brands, col_action = st.columns(
-    [1.2, 1.8, 1.2, 2.5, 1.2, 1.5, 1],
+    7,
     gap="medium"
 )
 
@@ -1383,11 +1412,10 @@ with col_mpn:
 with col_desc:
     st.markdown('<div class="xcontrol-group">', unsafe_allow_html=True)
     st.markdown('<label>Part description</label>', unsafe_allow_html=True)
-    st.session_state.desc = st.text_area("Part description",
+    st.session_state.desc = st.text_input("Part description",
                                           value=st.session_state.desc,
                                           placeholder="Dishwasher SS - Display Only…",
-                                          label_visibility="collapsed",
-                                          height=72)
+                                          label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_manuf:
@@ -1647,7 +1675,7 @@ elif not st.session_state.rec:
         </div>
     </div>
     """
-    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
+    st.markdown(_flat_html(html_str), unsafe_allow_html=True)
     html_str = """
     <div class="xcard">
         <div class="eyebrow">How it works</div>
@@ -1661,119 +1689,11 @@ elif not st.session_state.rec:
         </div>
     </div>
     """
-    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
+    st.markdown(_flat_html(html_str), unsafe_allow_html=True)
 
-# Pipeline overview - Professional component
-    html_str = """
-    <div class="xcard">
-        <div class="eyebrow">9-stage pipeline architecture</div>
-        <div class="xpipeline" style="margin-top:var(--sp-lg);">
-            <div class="pipe-stage pipe-input">
-                <div class="pipe-icon">◈</div>
-                <div class="pipe-label">MESSY DISTRIBUTOR ROW</div>
-                <div class="pipe-meta">MPN · telegraphic desc · empty brands</div>
-            </div>
-            <div class="pipe-connector">▼</div>
+    html_str = '<div class="xcard"><div class="eyebrow">9-STAGE PIPELINE ARCHITECTURE</div><div class="xpipeline" style="margin-top:var(--sp-lg)"><div class="pipe-stage pipe-input"><div class="pipe-icon">◈</div><div class="pipe-label">MESSY DISTRIBUTOR ROW</div><div class="pipe-meta">MPN · telegraphic desc · empty brands</div></div><div class="pipe-connector">▼</div><div class="pipe-group pipe-ai"><div class="pipe-group-header"><span class="pipe-group-badge">AI PROPOSES</span><span class="pipe-group-title">Stages 01–05 · LLM reasoning</span></div><div class="pipe-stages"><div class="pipe-step" data-step="01"><div class="pipe-step-num">01</div><div class="pipe-step-name">Ingest &amp; Clean</div><div class="pipe-step-desc">Strip placeholders, trim whitespace, normalize encoding</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="02"><div class="pipe-step-num">02</div><div class="pipe-step-name">De-Duplicate</div><div class="pipe-step-desc">Collapse repeat SKUs, hash-based dedup, save LLM spend</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="03"><div class="pipe-step-num">03</div><div class="pipe-step-name">AI Classify</div><div class="pipe-step-desc">Classpath / Dept / Class / Fine taxonomy via Claude</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="04"><div class="pipe-step-num">04</div><div class="pipe-step-name">AI Extract</div><div class="pipe-step-desc">Attribute triples {label, value, UOM} from description</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="05"><div class="pipe-step-num">05</div><div class="pipe-step-name">Enrich</div><div class="pipe-step-desc">Brand resolution, MPN-prefix signals, manufacturer lookup</div></div></div></div><div class="pipe-connector">▼</div><div class="pipe-group pipe-det"><div class="pipe-group-header"><span class="pipe-group-badge">DETERMINISTIC ENFORCE</span><span class="pipe-group-title">Stages 06–09 · Pure rules, auditable</span></div><div class="pipe-stages"><div class="pipe-step" data-step="06"><div class="pipe-step-num">06</div><div class="pipe-step-name">Normalize</div><div class="pipe-step-desc">Approved UOM + space; decimals to fractions; case rules</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="07"><div class="pipe-step-num">07</div><div class="pipe-step-name">Build 5 Descriptions</div><div class="pipe-step-desc">INVOICE ≤40 CAPS · MOBILE 60-80 · SHORT · LONG · MARKETING</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="08"><div class="pipe-step-num">08</div><div class="pipe-step-name">Resolve Assets</div><div class="pipe-step-desc">MFR URLs / images; flag unresolved for review queue</div></div><div class="pipe-arrow">→</div><div class="pipe-step" data-step="09"><div class="pipe-step-num">09</div><div class="pipe-step-name">Validation Gate</div><div class="pipe-step-desc">Per-field confidence to auto-ship or human review with reasons</div></div></div></div><div class="pipe-connector">▼</div><div class="pipe-stage pipe-output"><div class="pipe-icon">⬡</div><div class="pipe-label">CLEAN COMMERCE RECORD</div><div class="pipe-meta">252 fields · 5 descriptions · normalized attrs · confidence · review queue</div></div></div><div class="pipe-legend" style="margin-top:var(--sp-xl);display:flex;gap:var(--sp-md);flex-wrap:wrap;align-items:center;justify-content:center"><span class="xpill" style="border-color:rgba(160,195,236,0.4);color:var(--accent-breeze);background:rgba(160,195,236,0.08)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-breeze);margin-right:6px"></span>01–05 AI proposes</span><span class="xpill" style="border-color:rgba(0,217,146,0.4);color:var(--primary);background:rgba(0,217,146,0.08)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--primary);margin-right:6px"></span>06–09 Deterministic rules enforce</span><span class="xpill" style="border-color:rgba(255,180,84,0.4);color:var(--warn);background:rgba(255,180,84,0.08)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-right:6px"></span>Human review gate</span></div></div>'
+    st.markdown(html_str, unsafe_allow_html=True)
 
-            <div class="pipe-group pipe-ai">
-                <div class="pipe-group-header">
-                    <span class="pipe-group-badge">AI PROPOSES</span>
-                    <span class="pipe-group-title">Stages 01-05 · LLM reasoning</span>
-                </div>
-                <div class="pipe-stages">
-                    <div class="pipe-step" data-step="01">
-                        <div class="pipe-step-num">01</div>
-                        <div class="pipe-step-name">Ingest & Clean</div>
-                        <div class="pipe-step-desc">Strip placeholders, trim whitespace, normalize encoding</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="02">
-                        <div class="pipe-step-num">02</div>
-                        <div class="pipe-step-name">De-Duplicate</div>
-                        <div class="pipe-step-desc">Collapse repeat SKUs, hash-based dedup, save LLM spend</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="03">
-                        <div class="pipe-step-num">03</div>
-                        <div class="pipe-step-name">AI Classify</div>
-                        <div class="pipe-step-desc">Classpath / Dept / Class / Fine taxonomy via Claude</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="04">
-                        <div class="pipe-step-num">04</div>
-                        <div class="pipe-step-name">AI Extract</div>
-                        <div class="pipe-step-desc">Attribute triples {label, value, UOM} from description</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="05">
-                        <div class="pipe-step-num">05</div>
-                        <div class="pipe-step-name">Enrich</div>
-                        <div class="pipe-step-desc">Brand resolution, MPN-prefix signals, manufacturer lookup</div>
-                    </div>
-                </div>
-            </div>
-            <div class="pipe-connector">▼</div>
-
-            <div class="pipe-group pipe-det">
-                <div class="pipe-group-header">
-                    <span class="pipe-group-badge">DETERMINISTIC ENFORCE</span>
-                    <span class="pipe-group-title">Stages 06-09 · Pure rules, auditable</span>
-                </div>
-                <div class="pipe-stages">
-                    <div class="pipe-step" data-step="06">
-                        <div class="pipe-step-num">06</div>
-                        <div class="pipe-step-name">Normalize</div>
-                        <div class="pipe-step-desc">Approved UOM + space; decimals to fractions; case rules</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="07">
-                        <div class="pipe-step-num">07</div>
-                        <div class="pipe-step-name">Build 5 Descriptions</div>
-                        <div class="pipe-step-desc">INVOICE <=40 CAPS · MOBILE 60-80 · SHORT · LONG · MARKETING</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="08">
-                        <div class="pipe-step-num">08</div>
-                        <div class="pipe-step-name">Resolve Assets</div>
-                        <div class="pipe-step-desc">MFR URLs / images; flag unresolved for review queue</div>
-                    </div>
-                    <div class="pipe-arrow">→</div>
-                    <div class="pipe-step" data-step="09">
-                        <div class="pipe-step-num">09</div>
-                        <div class="pipe-step-name">Validation Gate</div>
-                        <div class="pipe-step-desc">Per-field confidence to auto-ship or human review with reasons</div>
-                    </div>
-                </div>
-            </div>
-            <div class="pipe-connector">▼</div>
-
-            <div class="pipe-stage pipe-output">
-                <div class="pipe-icon">⬡</div>
-                <div class="pipe-label">CLEAN COMMERCE RECORD</div>
-                <div class="pipe-meta">252 fields · 5 descriptions · normalized attrs · confidence · review queue</div>
-            </div>
-        </div>
-        <div class="pipe-legend" style="margin-top:var(--sp-xl); display:flex; gap:var(--sp-md); flex-wrap:wrap; align-items:center;">
-            <span class="xpill" style="border-color:rgba(160,195,236,0.4); color:var(--accent-breeze); background:rgba(160,195,236,0.08);">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-breeze);margin-right:6px;"></span>01-05 AI proposes
-            </span>
-            <span class="xpill" style="border-color:rgba(55,211,155,0.4); color:var(--good); background:rgba(55,211,155,0.08);">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px;"></span>06-09 Deterministic rules enforce
-            </span>
-            <span class="xpill" style="border-color:rgba(255,180,84,0.4); color:var(--warn); background:rgba(255,180,84,0.08);">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-right:6px;"></span>Human review gate
-            </span>
-        </div>
-    </div>
-    """
-    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
-
-    html_str = """
-    <div class="xcard">
-        <div class="eyebrow">Principle</div>
-        <div class="display-sm" style="color:var(--body)">
-            "AI reasons, deterministic rules enforce the spec - so no invented value ever ships."
-        </div>
-    </div>
-    """
-    st.markdown("".join([line.strip() for line in html_str.split("\\n")]), unsafe_allow_html=True)
+    # Principle
+    html_str = '<div class="xcard"><div class="eyebrow">Principle</div><div class="display-sm" style="color:var(--body)">"AI reasons, deterministic rules enforce the spec — so no invented value ever ships."</div></div>'
+    st.markdown(html_str, unsafe_allow_html=True)
