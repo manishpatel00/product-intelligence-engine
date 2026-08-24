@@ -1,11 +1,22 @@
-# Unilog Product Intelligence Engine
+<h1 align="center">Unilog Product Intelligence Engine</h1>
 
-**UniHack 2026 · Unilog challenge — "AI-Powered Product Intelligence for Industrial Commerce"**
+<p align="center">
+  <strong> UniHack 2026 | AI-powered product enrichment and deterministic data validation for industrial commerce.</strong>
+</p>
 
-> Turn one cryptic distributor row — a part number, a telegraphic description, and mostly-empty
-> brand fields — into the complete, standardized, search-ready **252-column Unilog Delivery Format**
-> record. **AI reasons; deterministic rules enforce the spec — so no invented value ever ships.**
+<p align="center">
+  <a href="https://appuct-intelligence-engine-juiorekdt2edseqhqt7c4k.streamlit.app/">
+    <img src="https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Live Demo">
+  </a>
+  <img src="https://img.shields.io/badge/Output-252%20Columns-20C997?style=for-the-badge" alt="252 Column Output">
+  <img src="https://img.shields.io/badge/Pipeline-9%20Stages-7C3AED?style=for-the-badge" alt="9 Stage Pipeline">
+</p>
 
+
+
+Turn a cryptic distributor row - a part number, telegraphic description, and incomplete brand data - into a complete, standardized, search-ready **252-column Unilog Delivery Format** record.
+
+> **AI reasons. Deterministic rules enforce. Human review handles uncertainty.**
 ---
 
 ## The problem
@@ -27,43 +38,12 @@ five standardized descriptions, resolved brand/manufacturer, assets, and a trust
 field expansion**. And the hard part isn't fluency, it's **trust**: the Solution Guide is blunt that
 *"a fluent description made of invented values scores zero."* **We treat a guess as worse than a blank.**
 
-## The idea: a hybrid engine
+## 9-Stage Pipeline Architecture
 
-Most tools let an LLM *write the whole record* — fluent, confident, and often quietly wrong. We
-invert control:
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/f60dc575-cff8-4492-aba7-9ca3c5a87e2a" />
 
-```
-        Claude PROPOSES  ────►  Deterministic rules DISPOSE  ────►  ships  or  REVIEW QUEUE
-   (forced JSON tool-call)      (pure Python: vocab, units,        (per-field
-    every value + confidence     fractions, char limits, casing)    confidence + reason)
-```
 
-The LLM never writes a final field. It proposes values under a **forced JSON schema**; a pure,
-rule-based layer then validates every one against controlled vocabularies and the written standard
-**before it ships**. What can't be verified is **flagged, not fabricated**.
-
-## The 9-stage pipeline
-
-```
- RAW ROW (6 cols)
-   │
-   ▼ [1] INGEST & CLEAN     strip placeholders ("-- Unbranded --" → empty)
-   ▼ [2] DE-DUPLICATE       collapse repeat SKUs (saves LLM spend)
-   ├───────────── AI PROPOSES (Claude, forced JSON) ─────────────┐
-   ▼ [3] CLASSIFY           → Classpath / Dept / Class / Fine     │
-   ▼ [4] EXTRACT ATTRIBUTES → {label, value, uom}[]               │
-   ▼ [5] ENRICH             from brand / MPN-prefix signals       │
-   ├──────────── DETERMINISTIC RULES ENFORCE (pure Python) ───────┤
-   ▼ [6] NORMALIZE          units → approved abbrev + space; decimals → fractions
-   ▼ [7] BUILD 5 DESCRIPTIONS  at spec lengths / casings
-   ▼ [8] RESOLVE ASSETS     URLs / images (flagged if unresolved)
-   ▼ [9] VALIDATION GATE    per-field confidence → PASS or REVIEW QUEUE
-   │
-   ├──►  252-COLUMN RECORD  (auto-ship)
-   └──►  HUMAN REVIEW QUEUE (specific reason per flagged field)
-```
-
-## Quickstart — zero setup
+## Quickstart - zero setup
 
 Pure Python **standard library only**. No `pip install`. No build step.
 
